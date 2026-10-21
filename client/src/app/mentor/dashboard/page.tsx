@@ -5,27 +5,25 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import { formatDate } from '@/lib/utils';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import {
-  TableProperties,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  FileCheck2,
-  Users,
   Search,
   ChevronLeft,
   ChevronRight,
   Globe,
   RefreshCw,
-  AlertCircle,
-  MessageSquare,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  ExternalLink,
   ShieldAlert,
+  SlidersHorizontal,
+  X,
+  FileCode2,
 } from 'lucide-react';
 import { GithubIcon } from '@/components/ui/icons';
 
@@ -73,7 +71,7 @@ export default function MentorDashboardPage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth() as any;
 
-  // State
+  // Data state
   const [submissions, setSubmissions] = useState<SubmissionItem[]>([]);
   const [stats, setStats] = useState<Statistics>({
     total: 0,
@@ -91,18 +89,19 @@ export default function MentorDashboardPage() {
     hasNextPage: false,
   });
 
+  // Query state
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Review Modal State
+  // Modal / Review state
   const [selectedSubmission, setSelectedSubmission] = useState<SubmissionItem | null>(null);
   const [actionStatus, setActionStatus] = useState<'APPROVED' | 'REJECTED'>('APPROVED');
   const [feedbackText, setFeedbackText] = useState('');
   const [isActionLoading, setIsActionLoading] = useState(false);
 
-  // Fetch Statistics
+  // Fetch KPI Stats
   const fetchStats = useCallback(async () => {
     try {
       const res = await api.get('/reviews/statistics');
@@ -110,11 +109,11 @@ export default function MentorDashboardPage() {
         setStats(res.data.data);
       }
     } catch (err) {
-      console.error('Error fetching statistics:', err);
+      console.error('Failed to fetch statistics:', err);
     }
   }, []);
 
-  // Fetch Paginated Submissions with Server-Side Filter
+  // Fetch Paginated Submissions
   const fetchSubmissions = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -137,20 +136,20 @@ export default function MentorDashboardPage() {
         setMeta(res.data.meta);
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to fetch review data');
+      toast.error(err.response?.data?.message || 'Failed to fetch review queue');
     } finally {
       setIsLoading(false);
     }
   }, [currentPage, statusFilter, searchTerm]);
 
-  // Auth & Role Guard
+  // Auth Guard
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
         router.push('/login');
       } else if (user.role !== 'MENTOR' && user.role !== 'ADMIN') {
         router.push('/student/submit');
-        toast.error('Access Denied: Mentor privileges required to access this dashboard.');
+        toast.error('Access Denied: Mentor permissions required.');
       } else {
         fetchStats();
         fetchSubmissions();
@@ -158,14 +157,14 @@ export default function MentorDashboardPage() {
     }
   }, [user, authLoading, router, fetchStats, fetchSubmissions]);
 
-  // Open review modal
+  // Open review inspector modal
   const openReviewModal = (sub: SubmissionItem) => {
     setSelectedSubmission(sub);
     setActionStatus(sub.status === 'REJECTED' ? 'REJECTED' : 'APPROVED');
     setFeedbackText(sub.feedback || '');
   };
 
-  // Submit Status Action
+  // Submit Evaluation Status Action
   const handleStatusUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedSubmission) return;
@@ -178,49 +177,48 @@ export default function MentorDashboardPage() {
       });
 
       if (res.data.success) {
-        toast.success(`Submission updated to ${actionStatus}!`);
+        toast.success(`Submission marked as ${actionStatus}`);
         setSelectedSubmission(null);
         fetchStats();
         fetchSubmissions();
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to update submission status.');
+      toast.error(err.response?.data?.message || 'Failed to update evaluation status.');
     } finally {
       setIsActionLoading(false);
     }
   };
 
+  const getInitials = (name: string) => {
+    if (!name) return 'S';
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  };
+
   const getStatusBadge = (status: SubmissionItem['status']) => {
     switch (status) {
       case 'APPROVED':
-        return (
-          <Badge variant="success" className="gap-1">
-            <CheckCircle2 className="h-3 w-3" />
-            Approved
-          </Badge>
-        );
+        return <Badge variant="success" dot>APPROVED</Badge>;
       case 'REJECTED':
-        return (
-          <Badge variant="destructive" className="gap-1">
-            <XCircle className="h-3 w-3" />
-            Rejected
-          </Badge>
-        );
+        return <Badge variant="destructive" dot>REJECTED</Badge>;
       case 'PENDING':
       default:
-        return (
-          <Badge variant="warning" className="gap-1">
-            <Clock className="h-3 w-3" />
-            Pending
-          </Badge>
-        );
+        return <Badge variant="warning" dot>PENDING</Badge>;
     }
+  };
+
+  const addPresetFeedback = (text: string) => {
+    setFeedbackText((prev) => (prev ? `${prev} ${text}` : text));
   };
 
   if (authLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-400 border-t-transparent" />
       </div>
     );
   }
@@ -228,244 +226,238 @@ export default function MentorDashboardPage() {
   if (user && user.role !== 'MENTOR' && user.role !== 'ADMIN') {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center text-center p-4">
-        <ShieldAlert className="h-12 w-12 text-rose-500 mb-3" />
-        <h2 className="text-xl font-bold text-white">403 - Forbidden Access</h2>
-        <p className="text-sm text-slate-400 mt-1 max-w-sm">
-          You do not have mentor or admin permissions to access this dashboard.
+        <ShieldAlert className="h-10 w-10 text-rose-500 mb-2" />
+        <h2 className="text-base font-semibold text-white">Access Restricted</h2>
+        <p className="text-xs text-zinc-400 mt-1 max-w-sm">
+          Lead Mentor or Administrator role is required to view this evaluation pipeline.
         </p>
       </div>
     );
   }
 
+  const approvalRate = stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0;
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+      {/* Page Title & Action Bar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-zinc-800/80">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              Mentor Review Dashboard
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">
+              Evaluation & Review Queue
             </h1>
-            <Badge variant="warning">Lead Mentor View</Badge>
+            <span className="text-xs font-mono text-zinc-500">• Server-Side Filtered</span>
           </div>
-          <p className="text-sm text-slate-400">
-            Real-time evaluation, server-side paginated project table & status assessment
+          <p className="text-xs text-zinc-400 mt-1">
+            Real-time pipeline monitoring, deliverable approvals, and student feedback evaluation
           </p>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            fetchStats();
-            fetchSubmissions();
-          }}
-          className="gap-1.5"
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-          Refresh Data
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              fetchStats();
+              fetchSubmissions();
+            }}
+            isLoading={isLoading}
+            className="gap-1.5"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Sync Queue
+          </Button>
+        </div>
       </div>
 
-      {/* KPI Aggregated Statistics Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {/* Total Submissions */}
-        <Card className="border-slate-800 bg-slate-900/60">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-slate-400">Total Submissions</p>
-              <h3 className="text-2xl font-bold text-white mt-1">{stats.total}</h3>
-            </div>
-            <div className="h-10 w-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <TableProperties className="h-5 w-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Pending Reviews */}
-        <Card className="border-slate-800 bg-slate-900/60">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-amber-400/90">Pending Reviews</p>
-              <h3 className="text-2xl font-bold text-white mt-1">{stats.pending}</h3>
-            </div>
-            <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-              <Clock className="h-5 w-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Approved Projects */}
-        <Card className="border-slate-800 bg-slate-900/60">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-emerald-400/90">Approved Projects</p>
-              <h3 className="text-2xl font-bold text-white mt-1">{stats.approved}</h3>
-            </div>
-            <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <CheckCircle2 className="h-5 w-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Rejected Projects */}
-        <Card className="border-slate-800 bg-slate-900/60">
-          <CardContent className="p-5 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-rose-400/90">Rejected Projects</p>
-              <h3 className="text-2xl font-bold text-white mt-1">{stats.rejected}</h3>
-            </div>
-            <div className="h-10 w-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
-              <XCircle className="h-5 w-5" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filter Tabs & Search Controls */}
-      <Card className="border-slate-800 bg-slate-900/60 mb-6">
-        <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          {/* Status Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-950/80 rounded-lg border border-slate-800 w-full sm:w-auto overflow-x-auto">
-            {(['ALL', 'PENDING', 'APPROVED', 'REJECTED'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => {
-                  setStatusFilter(tab);
-                  setCurrentPage(1);
-                }}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                  statusFilter === tab
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
-                }`}
-              >
-                {tab === 'ALL'
-                  ? `All (${stats.total})`
-                  : tab === 'PENDING'
-                  ? `Pending (${stats.pending})`
-                  : tab === 'APPROVED'
-                  ? `Approved (${stats.approved})`
-                  : `Rejected (${stats.rejected})`}
-              </button>
-            ))}
+      {/* Senior Executive KPI Strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 my-6">
+        <div className="p-4 rounded-lg border border-zinc-800/80 bg-zinc-950/40">
+          <div className="flex items-center justify-between text-xs text-zinc-400">
+            <span>Total Deliverables</span>
+            <span className="font-mono text-[10px] text-zinc-500">DATABASE</span>
           </div>
+          <div className="text-2xl font-bold font-mono text-white mt-1">{stats.total}</div>
+          <div className="text-[11px] text-zinc-500 mt-1">{stats.totalStudents} enrolled candidates</div>
+        </div>
 
-          {/* Search Box */}
-          <div className="relative w-full sm:w-72">
-            <Input
-              placeholder="Search student or project..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
+        <div className="p-4 rounded-lg border border-zinc-800/80 bg-zinc-950/40">
+          <div className="flex items-center justify-between text-xs text-amber-400/90">
+            <span>Pending Evaluation</span>
+            <span className="h-2 w-2 rounded-full bg-amber-400" />
+          </div>
+          <div className="text-2xl font-bold font-mono text-amber-300 mt-1">{stats.pending}</div>
+          <div className="text-[11px] text-zinc-500 mt-1">Requires reviewer action</div>
+        </div>
+
+        <div className="p-4 rounded-lg border border-zinc-800/80 bg-zinc-950/40">
+          <div className="flex items-center justify-between text-xs text-emerald-400/90">
+            <span>Approved Submissions</span>
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+          </div>
+          <div className="text-2xl font-bold font-mono text-emerald-300 mt-1">{stats.approved}</div>
+          <div className="text-[11px] text-zinc-500 mt-1">{approvalRate}% approval rate</div>
+        </div>
+
+        <div className="p-4 rounded-lg border border-zinc-800/80 bg-zinc-950/40">
+          <div className="flex items-center justify-between text-xs text-rose-400/90">
+            <span>Rejected / Revision</span>
+            <span className="h-2 w-2 rounded-full bg-rose-400" />
+          </div>
+          <div className="text-2xl font-bold font-mono text-rose-300 mt-1">{stats.rejected}</div>
+          <div className="text-[11px] text-zinc-500 mt-1">Feedback dispatched</div>
+        </div>
+      </div>
+
+      {/* Filter Segmented Control & Search Input */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+        {/* Status Segmented Pills */}
+        <div className="flex items-center gap-1 p-1 rounded-lg border border-zinc-800/80 bg-zinc-900/40 w-full sm:w-auto overflow-x-auto">
+          {(['ALL', 'PENDING', 'APPROVED', 'REJECTED'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => {
+                setStatusFilter(tab);
                 setCurrentPage(1);
               }}
-              className="pl-9 h-9 text-xs"
-            />
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500 pointer-events-none" />
-          </div>
-        </CardContent>
-      </Card>
+              className={`px-3 py-1 rounded-md text-xs font-mono transition-colors whitespace-nowrap ${
+                statusFilter === tab
+                  ? 'bg-zinc-100 text-zinc-900 font-medium'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+              }`}
+            >
+              {tab === 'ALL'
+                ? `All (${stats.total})`
+                : tab === 'PENDING'
+                ? `Pending (${stats.pending})`
+                : tab === 'APPROVED'
+                ? `Approved (${stats.approved})`
+                : `Rejected (${stats.rejected})`}
+            </button>
+          ))}
+        </div>
 
-      {/* Paginated Data Table */}
-      <Card className="border-slate-800 bg-slate-900/60 overflow-hidden shadow-xl">
+        {/* Search */}
+        <div className="relative w-full sm:w-64">
+          <Input
+            placeholder="Search student or repo..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="pl-8 text-xs h-8 bg-zinc-950/60"
+          />
+          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-zinc-500 pointer-events-none" />
+        </div>
+      </div>
+
+      {/* Enterprise Data Table */}
+      <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/60 overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-950/80 text-xs font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-800">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-zinc-900/60 text-[11px] font-mono text-zinc-400 border-b border-zinc-800/80">
               <tr>
-                <th className="py-3.5 px-4">Student</th>
-                <th className="py-3.5 px-4">Project Details</th>
-                <th className="py-3.5 px-4">Submitted</th>
-                <th className="py-3.5 px-4">Status</th>
-                <th className="py-3.5 px-4 text-right">Review Action</th>
+                <th className="py-3 px-4 font-medium">CANDIDATE</th>
+                <th className="py-3 px-4 font-medium">PROJECT & REPOSITORY</th>
+                <th className="py-3 px-4 font-medium">SUBMISSION DATE</th>
+                <th className="py-3 px-4 font-medium">EVALUATION</th>
+                <th className="py-3 px-4 font-medium text-right">ACTION</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/80">
+            <tbody className="divide-y divide-zinc-900/80">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-400">
+                  <td colSpan={5} className="py-12 text-center text-zinc-500">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
-                      <span className="text-xs">Fetching review submissions...</span>
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-400 border-t-transparent" />
+                      <span className="font-mono text-xs">Querying database...</span>
                     </div>
                   </td>
                 </tr>
               ) : submissions.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-400">
+                  <td colSpan={5} className="py-12 text-center text-zinc-500">
                     <div className="flex flex-col items-center justify-center gap-1">
-                      <FileCheck2 className="h-8 w-8 text-slate-600 mb-1" />
-                      <p className="text-sm font-medium text-slate-300">No submissions found</p>
-                      <p className="text-xs text-slate-500">
+                      <SlidersHorizontal className="h-6 w-6 text-zinc-600 mb-1" />
+                      <p className="text-xs font-medium text-zinc-300">No matching submissions found</p>
+                      <p className="text-[11px] text-zinc-500">
                         {statusFilter !== 'ALL'
-                          ? `No submissions currently under '${statusFilter}' status.`
-                          : 'No student submissions recorded yet.'}
+                          ? `There are no projects currently in '${statusFilter}' status.`
+                          : 'No submissions have been recorded in the database.'}
                       </p>
                     </div>
                   </td>
                 </tr>
               ) : (
                 submissions.map((sub) => (
-                  <tr key={sub.id} className="hover:bg-slate-800/40 transition-colors">
-                    {/* Student Info */}
-                    <td className="py-4 px-4 align-top">
-                      <div className="font-semibold text-white">{sub.student.name}</div>
-                      <div className="text-xs text-slate-400">{sub.student.email}</div>
+                  <tr key={sub.id} className="hover:bg-zinc-900/40 transition-colors">
+                    {/* Candidate */}
+                    <td className="py-3.5 px-4 align-top">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-7 w-7 rounded-full bg-zinc-800 text-zinc-300 flex items-center justify-center font-mono text-[10px] border border-zinc-700/60 shrink-0">
+                          {getInitials(sub.student.name)}
+                        </div>
+                        <div>
+                          <div className="font-medium text-zinc-200">{sub.student.name}</div>
+                          <div className="text-[11px] font-mono text-zinc-500">{sub.student.email}</div>
+                        </div>
+                      </div>
                     </td>
 
-                    {/* Project Details & Links */}
-                    <td className="py-4 px-4 align-top max-w-sm">
-                      <div className="font-medium text-slate-100">{sub.projectName}</div>
-                      <p className="text-xs text-slate-400 line-clamp-2 mt-1">
+                    {/* Project & Repos */}
+                    <td className="py-3.5 px-4 align-top max-w-sm">
+                      <div className="font-medium text-zinc-100">{sub.projectName}</div>
+                      <p className="text-[11px] text-zinc-400 line-clamp-1 mt-0.5">
                         {sub.description}
                       </p>
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="flex items-center gap-2 mt-1.5 font-mono text-[11px]">
                         <a
                           href={sub.repoUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700"
+                          className="inline-flex items-center gap-1 text-zinc-300 hover:text-white bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800 hover:border-zinc-700 transition-colors"
                         >
                           <GithubIcon className="h-3 w-3" />
-                          Repo
+                          Source
                         </a>
                         <a
                           href={sub.liveUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] text-indigo-400 hover:text-indigo-300 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800/60"
+                          className="inline-flex items-center gap-1 text-zinc-400 hover:text-zinc-200 bg-zinc-900/60 px-2 py-0.5 rounded border border-zinc-800 hover:border-zinc-700 transition-colors"
                         >
                           <Globe className="h-3 w-3" />
                           Live
                         </a>
                       </div>
                       {sub.feedback && (
-                        <div className="mt-2 text-[11px] text-slate-400 bg-slate-950/60 p-2 rounded border border-slate-800/80">
-                          <span className="text-indigo-400 font-semibold">Feedback: </span>
+                        <div className="mt-2 text-[11px] text-zinc-400 bg-zinc-900/70 p-2 rounded border border-zinc-800/80">
+                          <span className="text-zinc-300 font-semibold">Feedback Note: </span>
                           {sub.feedback}
                         </div>
                       )}
                     </td>
 
-                    {/* Submission Date */}
-                    <td className="py-4 px-4 align-top text-xs text-slate-400 whitespace-nowrap">
+                    {/* Date */}
+                    <td className="py-3.5 px-4 align-top font-mono text-[11px] text-zinc-400 whitespace-nowrap">
                       {formatDate(sub.createdAt)}
                     </td>
 
-                    {/* Status Badge */}
-                    <td className="py-4 px-4 align-top whitespace-nowrap">
+                    {/* Status Pill */}
+                    <td className="py-3.5 px-4 align-top whitespace-nowrap">
                       {getStatusBadge(sub.status)}
                     </td>
 
-                    {/* Action Button */}
-                    <td className="py-4 px-4 align-top text-right whitespace-nowrap">
+                    {/* Actions */}
+                    <td className="py-3.5 px-4 align-top text-right whitespace-nowrap">
                       <Button
                         size="sm"
                         variant={sub.status === 'PENDING' ? 'default' : 'outline'}
-                        className="text-xs h-8"
                         onClick={() => openReviewModal(sub)}
+                        className="h-7 text-xs font-medium"
                       >
-                        {sub.status === 'PENDING' ? 'Review Submission' : 'Change Status'}
+                        {sub.status === 'PENDING' ? 'Review & Grade' : 'Inspect'}
                       </Button>
                     </td>
                   </tr>
@@ -476,17 +468,17 @@ export default function MentorDashboardPage() {
         </div>
 
         {/* Server-Side Pagination Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-slate-800 bg-slate-950/60 text-xs text-slate-400 gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-between p-3 border-t border-zinc-800/80 bg-zinc-950/80 text-[11px] font-mono text-zinc-400 gap-2">
           <div>
             Showing{' '}
-            <span className="font-semibold text-slate-200">
+            <span className="text-zinc-200">
               {meta.total === 0 ? 0 : (meta.page - 1) * meta.limit + 1}
             </span>{' '}
             to{' '}
-            <span className="font-semibold text-slate-200">
+            <span className="text-zinc-200">
               {Math.min(meta.page * meta.limit, meta.total)}
             </span>{' '}
-            of <span className="font-semibold text-slate-200">{meta.total}</span> submissions
+            of <span className="text-zinc-200">{meta.total}</span> items
           </div>
 
           <div className="flex items-center gap-2">
@@ -495,14 +487,14 @@ export default function MentorDashboardPage() {
               size="sm"
               disabled={!meta.hasPrevPage || isLoading}
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              className="h-8 px-2.5 gap-1 text-xs"
+              className="h-7 px-2 text-xs"
             >
-              <ChevronLeft className="h-3.5 w-3.5" />
-              Previous
+              <ChevronLeft className="h-3.5 w-3.5 mr-0.5" />
+              Prev
             </Button>
 
-            <span className="px-2 text-slate-300 font-medium">
-              Page {meta.page} of {meta.totalPages}
+            <span className="px-2 text-zinc-300">
+              {meta.page} / {meta.totalPages}
             </span>
 
             <Button
@@ -510,108 +502,137 @@ export default function MentorDashboardPage() {
               size="sm"
               disabled={!meta.hasNextPage || isLoading}
               onClick={() => setCurrentPage((p) => p + 1)}
-              className="h-8 px-2.5 gap-1 text-xs"
+              className="h-7 px-2 text-xs"
             >
               Next
-              <ChevronRight className="h-3.5 w-3.5" />
+              <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
             </Button>
           </div>
         </div>
-      </Card>
+      </div>
 
-      {/* Review & Status Action Modal */}
+      {/* Review Inspector Command Dialog */}
       {selectedSubmission && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden">
-            <div className="p-6 border-b border-slate-800">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-white">Review Submission</h3>
-                <button
-                  onClick={() => setSelectedSubmission(null)}
-                  className="text-slate-400 hover:text-white text-sm"
-                >
-                  ✕
-                </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+          <div className="w-full max-w-xl rounded-xl border border-zinc-800 bg-zinc-950 shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/40">
+              <div>
+                <h3 className="text-sm font-semibold text-white">Evaluate Candidate Deliverable</h3>
+                <p className="text-xs text-zinc-400 mt-0.5 font-mono">
+                  {selectedSubmission.student.name} ({selectedSubmission.student.email})
+                </p>
               </div>
-              <p className="text-xs text-slate-400 mt-1">
-                Student:{' '}
-                <span className="text-white font-medium">{selectedSubmission.student.name}</span>{' '}
-                ({selectedSubmission.student.email})
-              </p>
+              <button
+                onClick={() => setSelectedSubmission(null)}
+                className="text-zinc-400 hover:text-white p-1"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
 
-            <form onSubmit={handleStatusUpdate} className="p-6 space-y-4">
-              <div>
-                <p className="text-xs font-semibold text-slate-300 mb-1">Project</p>
-                <p className="text-sm text-white font-medium">{selectedSubmission.projectName}</p>
-                <div className="flex gap-2 mt-2">
-                  <a
-                    href={selectedSubmission.repoUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-indigo-400 hover:underline flex items-center gap-1"
-                  >
-                    <GithubIcon className="h-3 w-3" /> Repo
-                  </a>
-                  <a
-                    href={selectedSubmission.liveUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-emerald-400 hover:underline flex items-center gap-1"
-                  >
-                    <Globe className="h-3 w-3" /> Live
-                  </a>
+            <form onSubmit={handleStatusUpdate} className="p-5 space-y-4">
+              {/* Project Card */}
+              <div className="p-3.5 rounded-lg border border-zinc-800/80 bg-zinc-900/30">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-zinc-200">
+                    {selectedSubmission.projectName}
+                  </span>
+                  <div className="flex gap-2">
+                    <a
+                      href={selectedSubmission.repoUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs font-mono text-zinc-400 hover:text-white flex items-center gap-1"
+                    >
+                      <GithubIcon className="h-3 w-3" /> Repo <ExternalLink className="h-2.5 w-2.5" />
+                    </a>
+                    <a
+                      href={selectedSubmission.liveUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs font-mono text-emerald-400 hover:underline flex items-center gap-1"
+                    >
+                      <Globe className="h-3 w-3" /> Live <ExternalLink className="h-2.5 w-2.5" />
+                    </a>
+                  </div>
                 </div>
+                <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
+                  {selectedSubmission.description}
+                </p>
               </div>
 
-              {/* Status Decision Buttons */}
+              {/* Status Decision Toggle */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-2">
-                  Evaluation Decision *
+                <label className="block text-xs font-mono text-zinc-400 mb-2 uppercase">
+                  Assessment Decision *
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2.5">
                   <button
                     type="button"
                     onClick={() => setActionStatus('APPROVED')}
-                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-sm font-semibold transition-all ${
+                    className={`flex items-center justify-center gap-2 p-2.5 rounded-md border text-xs font-medium transition-all ${
                       actionStatus === 'APPROVED'
-                        ? 'bg-emerald-600/20 border-emerald-500 text-emerald-400 shadow-md shadow-emerald-500/10'
-                        : 'border-slate-800 bg-slate-950/50 text-slate-400 hover:border-slate-700'
+                        ? 'bg-emerald-950/60 border-emerald-600 text-emerald-300 font-semibold'
+                        : 'border-zinc-800 bg-zinc-900/40 text-zinc-400 hover:border-zinc-700'
                     }`}
                   >
                     <CheckCircle2 className="h-4 w-4" />
-                    Approve Project
+                    Approve Deliverable
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setActionStatus('REJECTED')}
-                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-sm font-semibold transition-all ${
+                    className={`flex items-center justify-center gap-2 p-2.5 rounded-md border text-xs font-medium transition-all ${
                       actionStatus === 'REJECTED'
-                        ? 'bg-rose-600/20 border-rose-500 text-rose-400 shadow-md shadow-rose-500/10'
-                        : 'border-slate-800 bg-slate-950/50 text-slate-400 hover:border-slate-700'
+                        ? 'bg-rose-950/60 border-rose-600 text-rose-300 font-semibold'
+                        : 'border-zinc-800 bg-zinc-900/40 text-zinc-400 hover:border-zinc-700'
                     }`}
                   >
                     <XCircle className="h-4 w-4" />
-                    Reject Project
+                    Reject / Request Changes
                   </button>
                 </div>
               </div>
 
-              {/* Mentor Feedback Textarea */}
+              {/* Quick Feedback Chips */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Mentor Feedback / Assessment Notes
-                </label>
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <label className="font-mono text-zinc-400 uppercase text-[11px]">
+                    Feedback & Recommendations
+                  </label>
+                  <span className="text-[10px] text-zinc-500">Quick preset chips:</span>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {[
+                    'Clean Architecture & Modular Code',
+                    'Missing Rate Limiter Protection',
+                    'Production Ready & Approved',
+                    'Broken Live Demo Link',
+                  ].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => addPresetFeedback(preset)}
+                      className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700"
+                    >
+                      + {preset}
+                    </button>
+                  ))}
+                </div>
+
                 <Textarea
                   rows={3}
-                  placeholder="Provide constructive feedback for the student (e.g. suggestions for improvement, architectural strengths, or reasons for rejection)..."
+                  placeholder="Leave actionable review notes for the candidate..."
                   value={feedbackText}
                   onChange={(e) => setFeedbackText(e.target.value)}
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+              {/* Modal Actions */}
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
                 <Button
                   type="button"
                   variant="outline"
@@ -625,6 +646,7 @@ export default function MentorDashboardPage() {
                   size="sm"
                   variant={actionStatus === 'APPROVED' ? 'success' : 'destructive'}
                   isLoading={isActionLoading}
+                  className="font-medium"
                 >
                   Confirm {actionStatus}
                 </Button>

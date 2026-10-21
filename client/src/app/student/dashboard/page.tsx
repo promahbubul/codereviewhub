@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import { formatDate } from '@/lib/utils';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -18,6 +17,8 @@ import {
   MessageSquare,
   AlertCircle,
   RefreshCw,
+  GitCommit,
+  ExternalLink,
 } from 'lucide-react';
 import { GithubIcon } from '@/components/ui/icons';
 
@@ -55,7 +56,7 @@ export default function StudentDashboardPage() {
         setSubmissions(res.data.data);
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch your submissions.');
+      setError(err.response?.data?.message || 'Failed to fetch deliverables log');
     } finally {
       setIsLoading(false);
     }
@@ -74,61 +75,46 @@ export default function StudentDashboardPage() {
   const getStatusBadge = (status: Submission['status']) => {
     switch (status) {
       case 'APPROVED':
-        return (
-          <Badge variant="success" className="gap-1">
-            <CheckCircle2 className="h-3 w-3" />
-            Approved
-          </Badge>
-        );
+        return <Badge variant="success" dot>APPROVED</Badge>;
       case 'REJECTED':
-        return (
-          <Badge variant="destructive" className="gap-1">
-            <XCircle className="h-3 w-3" />
-            Rejected
-          </Badge>
-        );
+        return <Badge variant="destructive" dot>CHANGES REQUESTED</Badge>;
       case 'PENDING':
       default:
-        return (
-          <Badge variant="warning" className="gap-1">
-            <Clock className="h-3 w-3" />
-            Pending Review
-          </Badge>
-        );
+        return <Badge variant="warning" dot>IN QUEUE</Badge>;
     }
   };
 
   if (authLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-400 border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-zinc-800/80 mb-6">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              My Submissions
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">
+              Deliverables Log & Reviews
             </h1>
-            <Badge variant="info">Student History</Badge>
+            <span className="text-xs font-mono text-zinc-500">• Candidate History</span>
           </div>
-          <p className="text-sm text-slate-400">
-            Track review status, mentor notes, and project assessment outcomes
+          <p className="text-xs text-zinc-400 mt-1">
+            Real-time verification log, reviewer notes, and assessment history
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={fetchSubmissions} className="gap-1.5">
+          <Button variant="outline" size="sm" onClick={fetchSubmissions} className="gap-1.5 font-mono text-xs">
             <RefreshCw className="h-3.5 w-3.5" />
             Refresh
           </Button>
           <Link href="/student/submit">
-            <Button size="sm" className="gap-1.5">
+            <Button size="sm" className="gap-1.5 font-medium">
               <Send className="h-3.5 w-3.5" />
               New Submission
             </Button>
@@ -136,109 +122,97 @@ export default function StudentDashboardPage() {
         </div>
       </div>
 
-      {/* Error state */}
       {error && (
-        <div className="mb-6 rounded-lg border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300 flex items-center gap-3">
-          <AlertCircle className="h-5 w-5 text-rose-400 shrink-0" />
+        <div className="mb-6 rounded-lg border border-rose-900/60 bg-rose-950/40 p-3 text-xs text-rose-300 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      {/* Loading Skeletons */}
+      {/* Submission List / Activity Timeline */}
       {isLoading ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="h-40 rounded-xl border border-slate-800 bg-slate-900/40 animate-pulse"
+              className="h-36 rounded-lg border border-zinc-800/80 bg-zinc-950/40 animate-pulse"
             />
           ))}
         </div>
       ) : submissions.length === 0 ? (
-        <Card className="text-center py-12 border-slate-800 bg-slate-900/40">
-          <CardContent className="space-y-4">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-800 text-slate-400">
-              <Send className="h-6 w-6" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white">No submissions yet</h3>
-              <p className="text-sm text-slate-400 mt-1 max-w-sm mx-auto">
-                You haven&apos;t submitted any projects for evaluation yet. Submit your first project now!
-              </p>
-            </div>
-            <Link href="/student/submit">
-              <Button size="sm" className="gap-2 mt-2">
-                <Send className="h-4 w-4" />
-                Submit Your Project
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+        <div className="text-center py-16 rounded-xl border border-zinc-800/80 bg-zinc-950/40">
+          <GitCommit className="mx-auto h-8 w-8 text-zinc-600 mb-2" />
+          <h3 className="text-sm font-semibold text-zinc-300">No project deliverables logged</h3>
+          <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
+            You have not submitted any projects to the evaluation queue yet.
+          </p>
+          <Link href="/student/submit">
+            <Button size="sm" className="mt-4 gap-1.5">
+              <Send className="h-3.5 w-3.5" />
+              Submit First Project
+            </Button>
+          </Link>
+        </div>
       ) : (
         <div className="space-y-4">
           {submissions.map((sub) => (
-            <Card
+            <div
               key={sub.id}
-              className="border-slate-800 bg-slate-900/60 shadow-md hover:border-slate-700 transition-colors"
+              className="rounded-lg border border-zinc-800/80 bg-zinc-950/60 p-5 shadow-xs hover:border-zinc-700/80 transition-colors"
             >
-              <CardHeader className="pb-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
-                    <CardTitle className="text-xl font-bold text-white">
-                      {sub.projectName}
-                    </CardTitle>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Submitted on {formatDate(sub.createdAt)}
-                    </p>
-                  </div>
-                  <div>{getStatusBadge(sub.status)}</div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-zinc-900">
+                <div>
+                  <h3 className="text-base font-semibold text-white">{sub.projectName}</h3>
+                  <p className="text-[11px] font-mono text-zinc-500 mt-0.5">
+                    Logged: {formatDate(sub.createdAt)}
+                  </p>
                 </div>
-              </CardHeader>
+                <div>{getStatusBadge(sub.status)}</div>
+              </div>
 
-              <CardContent className="space-y-4">
-                <p className="text-sm text-slate-300 leading-relaxed">{sub.description}</p>
+              <div className="py-3">
+                <p className="text-xs text-zinc-400 leading-relaxed">{sub.description}</p>
 
-                {/* External Links */}
-                <div className="flex flex-wrap items-center gap-3 pt-1">
+                <div className="flex items-center gap-2 mt-3 font-mono text-[11px]">
                   <a
                     href={sub.repoUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors"
+                    className="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white bg-zinc-900 px-2.5 py-1 rounded border border-zinc-800 hover:border-zinc-700 transition-colors"
                   >
-                    <GithubIcon className="h-3.5 w-3.5" />
-                    Source Code
+                    <GithubIcon className="h-3 w-3" />
+                    Repository <ExternalLink className="h-2.5 w-2.5 text-zinc-500" />
                   </a>
                   <a
                     href={sub.liveUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-300 hover:text-indigo-200 bg-indigo-950/60 px-3 py-1.5 rounded-lg border border-indigo-800/60 hover:border-indigo-700 transition-colors"
+                    className="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 bg-zinc-900/60 px-2.5 py-1 rounded border border-zinc-800 hover:border-zinc-700 transition-colors"
                   >
-                    <Globe className="h-3.5 w-3.5" />
-                    Live Preview
+                    <Globe className="h-3 w-3" />
+                    Live Demo <ExternalLink className="h-2.5 w-2.5 text-zinc-500" />
                   </a>
                 </div>
+              </div>
 
-                {/* Mentor Feedback Box */}
-                {sub.feedback && (
-                  <div className="mt-4 rounded-lg border border-slate-800 bg-slate-950/70 p-3.5">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-400 mb-1.5">
-                      <MessageSquare className="h-3.5 w-3.5" />
-                      <span>Mentor Feedback</span>
-                      {sub.reviewedBy && (
-                        <span className="text-slate-400 font-normal">
-                          by {sub.reviewedBy.name} • {formatDate(sub.reviewedAt)}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-300 italic whitespace-pre-wrap">
-                      &quot;{sub.feedback}&quot;
-                    </p>
+              {/* Reviewer Feedback Callout */}
+              {sub.feedback && (
+                <div className="mt-3 p-3.5 rounded-md border border-zinc-800/80 bg-zinc-900/40">
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-300 font-medium mb-1">
+                    <MessageSquare className="h-3.5 w-3.5 text-zinc-400" />
+                    <span>Reviewer Assessment:</span>
+                    {sub.reviewedBy && (
+                      <span className="text-[11px] font-mono text-zinc-500">
+                        {sub.reviewedBy.name} • {formatDate(sub.reviewedAt)}
+                      </span>
+                    )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  <p className="text-xs text-zinc-400 italic pl-5 border-l-2 border-zinc-700">
+                    &ldquo;{sub.feedback}&rdquo;
+                  </p>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}

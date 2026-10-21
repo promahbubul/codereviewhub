@@ -1,174 +1,243 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
-  ShieldCheck,
-  Send,
-  TableProperties,
-  Database,
   ArrowRight,
-  Code2,
-  CheckCircle2,
+  Shield,
   Layers,
   Sparkles,
+  CheckCircle2,
+  GitBranch,
+  Terminal,
+  Activity,
+  ExternalLink,
 } from 'lucide-react';
+import { GithubIcon } from '@/components/ui/icons';
+import { toast } from 'sonner';
 
 export default function HomePage() {
-  const { user } = useAuth() as any;
+  const router = useRouter();
+  const { user, login } = useAuth() as any;
+  const [isDemoLoading, setIsDemoLoading] = useState<string | null>(null);
+
+  // Fast One-Click Demo Session Launcher
+  const handleQuickDemo = async (role: 'MENTOR' | 'STUDENT') => {
+    setIsDemoLoading(role);
+    const credentials =
+      role === 'MENTOR'
+        ? { email: 'mentor@programming-hero.com', password: 'Mentor@12345' }
+        : { email: 'tanvir@student.ph', password: 'Student@12345' };
+
+    try {
+      const res = await api.post('/auth/login', credentials);
+      if (res.data.success) {
+        const { token, user: authUser } = res.data.data;
+        login(token, authUser);
+        toast.success(`Authenticated as ${role.toLowerCase()}: ${authUser.name}`);
+        if (role === 'MENTOR') {
+          router.push('/mentor/dashboard');
+        } else {
+          router.push('/student/submit');
+        }
+      }
+    } catch {
+      toast.error('Failed to initiate demo session');
+    } finally {
+      setIsDemoLoading(null);
+    }
+  };
 
   return (
-    <div className="relative overflow-hidden">
-      {/* Background Glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-indigo-500/15 via-purple-500/10 to-transparent blur-3xl -z-10 pointer-events-none" />
-
+    <div className="relative overflow-hidden subtle-grid min-h-[calc(100vh-3.5rem)] flex flex-col justify-between">
       {/* Hero Section */}
-      <section className="mx-auto max-w-6xl px-4 pt-16 pb-20 sm:px-6 lg:px-8 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-1 text-xs font-medium text-indigo-300 mb-6 backdrop-blur-sm animate-pulse">
-          <Sparkles className="h-3.5 w-3.5" />
-          <span>Associate Web Instructor Hiring Assessment</span>
+      <section className="mx-auto max-w-5xl px-4 pt-16 pb-16 sm:px-6 lg:px-8 text-center">
+        {/* Release Pill */}
+        <div className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1 text-xs font-mono text-zinc-300 mb-6 backdrop-blur-xs">
+          <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          <span>v1.0.0 • Code Review & Evaluation Engine</span>
         </div>
 
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
-          Project Submission &{' '}
-          <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-            Mentor Review
-          </span>{' '}
-          Platform
+        {/* Hero Title */}
+        <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight text-white max-w-3xl mx-auto leading-[1.12]">
+          Developer Deliverables & Review Workflows
         </h1>
 
-        <p className="mt-6 text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          A high-performance fullstack evaluation dashboard engineered with Next.js, Express.js,
-          Prisma ORM, PostgreSQL, and strict Role-Based Access Control (RBAC).
+        <p className="mt-5 text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+          High-throughput submission management platform engineered for real-time mentor code reviews,
+          duplicate repository prevention, and role-based access control.
         </p>
 
-        {/* Action Buttons */}
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+        {/* Instant Evaluation Entry Actions */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           {user ? (
-            user.role === 'STUDENT' ? (
-              <Link href="/student/submit">
-                <Button size="lg" className="gap-2 text-base shadow-indigo-500/25">
-                  <Send className="h-5 w-5" />
-                  Go to Submission Portal
+            user.role === 'MENTOR' || user.role === 'ADMIN' ? (
+              <Link href="/mentor/dashboard">
+                <Button size="lg" className="gap-2 font-medium">
+                  Open Review Queue
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
             ) : (
-              <Link href="/mentor/dashboard">
-                <Button size="lg" variant="gradient" className="gap-2 text-base shadow-purple-500/25">
-                  <TableProperties className="h-5 w-5" />
-                  Open Mentor Dashboard
+              <Link href="/student/submit">
+                <Button size="lg" className="gap-2 font-medium">
+                  Submit Deliverable
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
             )
           ) : (
-            <>
+            <div className="flex flex-wrap items-center justify-center gap-2.5 p-1.5 rounded-lg border border-zinc-800/80 bg-zinc-900/40 backdrop-blur-xs">
+              <span className="text-[11px] font-mono text-zinc-400 px-2 hidden sm:inline">
+                Instant Access:
+              </span>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => handleQuickDemo('MENTOR')}
+                isLoading={isDemoLoading === 'MENTOR'}
+                className="gap-1.5 font-medium"
+              >
+                <Terminal className="h-3.5 w-3.5 text-zinc-900" />
+                Launch as Mentor
+              </Button>
+
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => handleQuickDemo('STUDENT')}
+                isLoading={isDemoLoading === 'STUDENT'}
+                className="gap-1.5 font-medium"
+              >
+                <GitBranch className="h-3.5 w-3.5 text-zinc-400" />
+                Launch as Student
+              </Button>
+
               <Link href="/login">
-                <Button size="lg" className="gap-2 text-base bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/25">
-                  Get Started (Login)
-                  <ArrowRight className="h-4 w-4" />
+                <Button variant="ghost" size="sm" className="text-zinc-400">
+                  Manual Sign In
                 </Button>
               </Link>
-              <Link href="/signup">
-                <Button size="lg" variant="outline" className="text-base">
-                  Sign Up as Student
-                </Button>
-              </Link>
-            </>
+            </div>
           )}
         </div>
 
-        {/* Demo Fast Login Banner */}
-        <div className="mt-14 max-w-3xl mx-auto p-4 rounded-xl border border-slate-800 bg-slate-900/60 backdrop-blur-md">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
-            Quick Evaluation Credentials (Pre-seeded in Neon DB)
-          </p>
-          <div className="grid sm:grid-cols-2 gap-3 text-left">
-            <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800 flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-white">Mentor Account</span>
-                  <Badge variant="warning">MENTOR</Badge>
-                </div>
-                <p className="text-xs font-mono text-slate-400 mt-1">mentor@programming-hero.com</p>
-                <p className="text-xs font-mono text-slate-500">Pass: Mentor@12345</p>
-              </div>
-              <Link href="/login?email=mentor@programming-hero.com">
-                <Button size="sm" variant="outline" className="text-xs h-7">
-                  Test Mentor
-                </Button>
-              </Link>
+        {/* macOS Window UI Mockup Frame */}
+        <div className="mt-14 mx-auto max-w-4xl rounded-xl border border-zinc-800/80 bg-zinc-950/80 shadow-2xl overflow-hidden text-left">
+          {/* Window Header */}
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800/80 bg-zinc-900/50">
+            <div className="flex items-center gap-1.5">
+              <div className="h-2.5 w-2.5 rounded-full bg-zinc-700/60" />
+              <div className="h-2.5 w-2.5 rounded-full bg-zinc-700/60" />
+              <div className="h-2.5 w-2.5 rounded-full bg-zinc-700/60" />
+              <span className="ml-2 text-[11px] font-mono text-zinc-500">review.workspace/queue</span>
             </div>
+            <div className="flex items-center gap-2 text-[10px] font-mono text-zinc-500">
+              <Activity className="h-3 w-3 text-emerald-400" />
+              <span>LIVE QUEUE</span>
+            </div>
+          </div>
 
-            <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800 flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-white">Student Account</span>
-                  <Badge variant="info">STUDENT</Badge>
-                </div>
-                <p className="text-xs font-mono text-slate-400 mt-1">tanvir@student.ph</p>
-                <p className="text-xs font-mono text-slate-500">Pass: Student@12345</p>
-              </div>
-              <Link href="/login?email=tanvir@student.ph">
-                <Button size="sm" variant="outline" className="text-xs h-7">
-                  Test Student
-                </Button>
-              </Link>
-            </div>
+          {/* Table Mockup Preview */}
+          <div className="p-4 overflow-x-auto font-mono text-xs">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-zinc-500 border-b border-zinc-800/60 text-[11px]">
+                  <th className="pb-2 font-normal">STUDENT</th>
+                  <th className="pb-2 font-normal">REPOSITORY</th>
+                  <th className="pb-2 font-normal">DECISION</th>
+                  <th className="pb-2 font-normal text-right">EVALUATION</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-900 text-zinc-300 text-[11px]">
+                <tr>
+                  <td className="py-2.5 text-zinc-200">tanvir@student.ph</td>
+                  <td className="py-2.5 text-zinc-400 flex items-center gap-1.5">
+                    <GithubIcon className="h-3 w-3" /> devfolio-app
+                  </td>
+                  <td className="py-2.5">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/40">
+                      ● APPROVED
+                    </span>
+                  </td>
+                  <td className="py-2.5 text-right text-zinc-500">Verified</td>
+                </tr>
+                <tr>
+                  <td className="py-2.5 text-zinc-200">nusrat@student.ph</td>
+                  <td className="py-2.5 text-zinc-400 flex items-center gap-1.5">
+                    <GithubIcon className="h-3 w-3" /> task-pulse
+                  </td>
+                  <td className="py-2.5">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-400 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-800/40">
+                      ● PENDING
+                    </span>
+                  </td>
+                  <td className="py-2.5 text-right text-zinc-400 font-medium">In Review</td>
+                </tr>
+                <tr>
+                  <td className="py-2.5 text-zinc-200">rakib@student.ph</td>
+                  <td className="py-2.5 text-zinc-400 flex items-center gap-1.5">
+                    <GithubIcon className="h-3 w-3" /> fintrack-api
+                  </td>
+                  <td className="py-2.5">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-mono text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
+                      ● QUEUED
+                    </span>
+                  </td>
+                  <td className="py-2.5 text-right text-zinc-500">Awaiting</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
 
-      {/* Feature Highlights Grid */}
-      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 border-t border-slate-900">
-        <h2 className="text-2xl font-bold text-center text-white mb-10">
-          Core Engineering & Requirement Architecture
-        </h2>
+      {/* Engineering Architecture Highlights */}
+      <section className="mx-auto max-w-5xl px-4 pb-16 sm:px-6 lg:px-8 border-t border-zinc-900 pt-12">
+        <div className="grid md:grid-cols-3 gap-6 text-left">
+          <div className="p-4 rounded-lg border border-zinc-800/80 bg-zinc-950/40">
+            <div className="h-8 w-8 rounded-md bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 mb-3">
+              <Shield className="h-4 w-4" />
+            </div>
+            <h3 className="text-sm font-semibold text-zinc-200 mb-1">
+              Role-Based Access Control
+            </h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Stateless JWT verification with strict role enforcement protecting mentor and student
+              route boundaries at the API gateway layer.
+            </p>
+          </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card className="hover:border-slate-700 transition-colors">
-            <CardContent className="pt-6">
-              <div className="h-10 w-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4">
-                <Send className="h-5 w-5" />
-              </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Student Portal</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                Project submission with end-to-end Zod validation, automated duplicate prevention,
-                anti-spam rate limiting, and real-time review status tracking.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="p-4 rounded-lg border border-zinc-800/80 bg-zinc-950/40">
+            <div className="h-8 w-8 rounded-md bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 mb-3">
+              <Layers className="h-4 w-4" />
+            </div>
+            <h3 className="text-sm font-semibold text-zinc-200 mb-1">
+              Automated Duplicate Prevention
+            </h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Composite unique constraint indexing (`studentId + repoUrl`) preventing redundant
+              evaluations and double-submissions.
+            </p>
+          </div>
 
-          <Card className="hover:border-slate-700 transition-colors">
-            <CardContent className="pt-6">
-              <div className="h-10 w-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 mb-4">
-                <TableProperties className="h-5 w-5" />
-              </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Mentor Review Dashboard</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                Server-side paginated data table, server-side status filtering, aggregated KPI statistics,
-                and one-click approval/rejection with optional feedback notes.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:border-slate-700 transition-colors">
-            <CardContent className="pt-6">
-              <div className="h-10 w-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Defensive RBAC & Security</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                Stateless JWT authentication, role guards protecting student and mentor endpoints,
-                Helmet HTTP security headers, and PostgreSQL relational integrity via Prisma.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="p-4 rounded-lg border border-zinc-800/80 bg-zinc-950/40">
+            <div className="h-8 w-8 rounded-md bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 mb-3">
+              <CheckCircle2 className="h-4 w-4" />
+            </div>
+            <h3 className="text-sm font-semibold text-zinc-200 mb-1">
+              Server-Side Evaluation Pipeline
+            </h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              PostgreSQL count aggregations, server-side paginated queries, and structured feedback
+              storage with reviewer traceability.
+            </p>
+          </div>
         </div>
       </section>
     </div>

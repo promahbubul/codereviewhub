@@ -5,11 +5,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { UserPlus, User, Mail, KeyRound } from 'lucide-react';
+import { Layers } from 'lucide-react';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -27,7 +26,7 @@ export default function SignupPage() {
     setError(null);
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setError('Password must be at least 6 characters');
       return;
     }
 
@@ -41,13 +40,13 @@ export default function SignupPage() {
     try {
       const res = await api.post('/auth/signup', { name, email, password });
       if (res.data.success) {
-        const { token, user } = res.data.data;
-        login(token, user);
-        toast.success('Student account registered successfully!');
+        const { token, user: newUser } = res.data.data;
+        login(token, newUser);
+        toast.success('Candidate profile registered');
         router.push('/student/submit');
       }
     } catch (err: any) {
-      const msg = err.response?.data?.message || 'Registration failed. Please try again.';
+      const msg = err.response?.data?.message || 'Registration failed. Please check inputs.';
       setError(msg);
       toast.error(msg);
     } finally {
@@ -56,115 +55,97 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <Card className="border-slate-800 bg-slate-900/70 shadow-2xl backdrop-blur-xl">
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
-              <UserPlus className="h-6 w-6" />
+    <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center p-4 subtle-grid">
+      <div className="w-full max-w-sm">
+        {/* Brand Header */}
+        <div className="text-center mb-6">
+          <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-zinc-900 mb-3 shadow-xs">
+            <Layers className="h-5 w-5" />
+          </div>
+          <h2 className="text-xl font-semibold tracking-tight text-white">Create Candidate Account</h2>
+          <p className="text-xs text-zinc-400 mt-1">Register to submit code deliverables and view feedback</p>
+        </div>
+
+        {/* Card */}
+        <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/80 p-6 shadow-xl backdrop-blur-xs">
+          {error && (
+            <div className="mb-4 rounded-md border border-rose-900/60 bg-rose-950/40 p-2.5 text-xs text-rose-300 font-mono">
+              {error}
             </div>
-            <CardTitle className="text-2xl font-bold">Create Student Account</CardTitle>
-            <CardDescription className="text-slate-400">
-              Join the platform to submit projects and receive mentor reviews
-            </CardDescription>
-          </CardHeader>
+          )}
 
-          <CardContent className="pt-4">
-            {error && (
-              <div className="mb-4 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300">
-                {error}
-              </div>
-            )}
+          <form onSubmit={handleSubmit} className="space-y-3.5">
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1.5 uppercase">
+                Full Name
+              </label>
+              <Input
+                type="text"
+                required
+                placeholder="Mahbubul Alam"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <Input
-                    type="text"
-                    required
-                    placeholder="e.g. Mahbubul Alam"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="pl-9"
-                  />
-                  <User className="absolute left-3 top-3 h-4 w-4 text-slate-500 pointer-events-none" />
-                </div>
-              </div>
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1.5 uppercase">
+                Email Address
+              </label>
+              <Input
+                type="email"
+                required
+                placeholder="name@organization.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
 
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Input
-                    type="email"
-                    required
-                    placeholder="student@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-9"
-                  />
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-500 pointer-events-none" />
-                </div>
-              </div>
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1.5 uppercase">
+                Password
+              </label>
+              <Input
+                type="password"
+                required
+                placeholder="Minimum 6 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
 
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  Password
-                </label>
-                <div className="relative">
-                  <Input
-                    type="password"
-                    required
-                    placeholder="At least 6 characters"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-9"
-                  />
-                  <KeyRound className="absolute left-3 top-3 h-4 w-4 text-slate-500 pointer-events-none" />
-                </div>
-              </div>
+            <div>
+              <label className="block text-xs font-mono text-zinc-400 mb-1.5 uppercase">
+                Confirm Password
+              </label>
+              <Input
+                type="password"
+                required
+                placeholder="Re-enter password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
 
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <Input
-                    type="password"
-                    required
-                    placeholder="Re-enter password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-9"
-                  />
-                  <KeyRound className="absolute left-3 top-3 h-4 w-4 text-slate-500 pointer-events-none" />
-                </div>
-              </div>
+            <Button
+              type="submit"
+              variant="default"
+              className="w-full mt-2 font-medium"
+              isLoading={isLoading}
+            >
+              Create Account
+            </Button>
+          </form>
 
-              <Button
-                type="submit"
-                variant="default"
-                className="w-full mt-2 font-semibold shadow-md shadow-indigo-500/20"
-                isLoading={isLoading}
-              >
-                Create Account
-              </Button>
-            </form>
-          </CardContent>
-
-          <CardFooter className="justify-center border-t border-slate-800/80 pt-4">
-            <p className="text-xs text-slate-400">
-              Already have an account?{' '}
-              <Link href="/login" className="font-semibold text-indigo-400 hover:text-indigo-300 underline underline-offset-4">
-                Sign In
+          <div className="mt-5 pt-4 text-center border-t border-zinc-900">
+            <p className="text-xs text-zinc-500">
+              Already registered?{' '}
+              <Link href="/login" className="text-zinc-300 hover:text-white font-medium underline underline-offset-4">
+                Sign in
               </Link>
             </p>
-          </CardFooter>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

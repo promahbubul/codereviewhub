@@ -2,7 +2,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'success' | 'gradient';
+  variant?: 'default' | 'secondary' | 'outline' | 'destructive' | 'ghost' | 'success';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   isLoading?: boolean;
 }
@@ -10,23 +10,22 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'default', size = 'default', isLoading = false, children, disabled, ...props }, ref) => {
     const baseStyles =
-      'inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none cursor-pointer';
+      'inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 disabled:pointer-events-none disabled:opacity-50 select-none cursor-pointer';
 
     const variants = {
-      default: 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 focus-visible:ring-indigo-500',
-      destructive: 'bg-rose-600 text-white shadow-sm hover:bg-rose-700 focus-visible:ring-rose-500',
-      outline: 'border border-slate-700 bg-slate-900/40 text-slate-200 hover:bg-slate-800 hover:text-white',
-      secondary: 'bg-slate-800 text-slate-100 hover:bg-slate-700 focus-visible:ring-slate-500',
-      ghost: 'text-slate-300 hover:bg-slate-800 hover:text-white',
-      success: 'bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 focus-visible:ring-emerald-500',
-      gradient: 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-md hover:opacity-95',
+      default: 'bg-zinc-100 text-zinc-900 hover:bg-white shadow-xs font-semibold',
+      secondary: 'bg-zinc-800/90 text-zinc-200 hover:bg-zinc-700 border border-zinc-700/60',
+      outline: 'border border-zinc-800 bg-zinc-900/40 text-zinc-300 hover:bg-zinc-800 hover:text-white hover:border-zinc-700',
+      destructive: 'bg-rose-950/60 text-rose-300 hover:bg-rose-900/80 border border-rose-800/60',
+      success: 'bg-emerald-950/60 text-emerald-300 hover:bg-emerald-900/80 border border-emerald-800/60',
+      ghost: 'text-zinc-400 hover:bg-zinc-800/70 hover:text-zinc-100',
     };
 
     const sizes = {
-      default: 'h-10 px-4 py-2',
-      sm: 'h-8 rounded-md px-3 text-xs',
-      lg: 'h-11 rounded-lg px-6 text-base',
-      icon: 'h-9 w-9',
+      default: 'h-9 px-3.5 py-1.5',
+      sm: 'h-7 rounded px-2.5 text-xs',
+      lg: 'h-10 rounded-md px-5 text-sm',
+      icon: 'h-8 w-8',
     };
 
     return (
@@ -38,7 +37,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {isLoading && (
           <svg
-            className="mr-2 h-4 w-4 animate-spin"
+            className="mr-2 h-3.5 w-3.5 animate-spin text-current"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"

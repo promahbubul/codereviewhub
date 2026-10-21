@@ -6,54 +6,72 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { GraduationCap, LayoutDashboard, Send, LogOut, LogIn, UserPlus } from 'lucide-react';
+import { Layers, Send, TableProperties, LogOut, LogIn, CheckCircle2 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
-  const { user, logout, isAuthenticated } = useAuth() as any;
+  const { user, logout } = useAuth() as any;
   const pathname = usePathname();
 
-  return (
-    <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-            <GraduationCap className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <span className="text-lg font-bold tracking-tight text-white group-hover:text-indigo-400 transition-colors">
-              PeerReview<span className="text-indigo-500">.io</span>
-            </span>
-            <span className="block text-[10px] uppercase font-semibold text-slate-400 tracking-wider">
-              Programming Hero Task
-            </span>
-          </div>
-        </Link>
+  const getInitials = (name: string) => {
+    if (!name) return 'U';
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  };
 
-        {/* Navigation Links */}
+  return (
+    <header className="sticky top-0 z-50 h-14 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md">
+      <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Brand */}
+        <div className="flex items-center gap-6">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-zinc-100 text-zinc-900 group-hover:bg-white transition-colors">
+              <Layers className="h-4 w-4" />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold tracking-tight text-zinc-100">
+                CodeReview<span className="text-zinc-500 font-normal">Hub</span>
+              </span>
+              <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-mono text-zinc-400">
+                v1.0
+              </span>
+            </div>
+          </Link>
+
+          {/* System Status Pill (Desktop) */}
+          <div className="hidden lg:flex items-center gap-1.5 text-[11px] font-mono text-zinc-400 border border-zinc-800/80 bg-zinc-900/40 px-2 py-0.5 rounded-full">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Operational</span>
+          </div>
+        </div>
+
+        {/* Center Navigation Links */}
         <nav className="hidden md:flex items-center gap-1">
           {user?.role === 'STUDENT' && (
             <>
               <Link
                 href="/student/submit"
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   pathname === '/student/submit'
-                    ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                    ? 'bg-zinc-800 text-zinc-100'
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
                 }`}
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-3.5 w-3.5" />
                 Submit Project
               </Link>
               <Link
                 href="/student/dashboard"
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   pathname === '/student/dashboard'
-                    ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                    ? 'bg-zinc-800 text-zinc-100'
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
                 }`}
               >
-                <LayoutDashboard className="h-4 w-4" />
+                <TableProperties className="h-3.5 w-3.5" />
                 My Submissions
               </Link>
             </>
@@ -62,26 +80,22 @@ export const Navbar: React.FC = () => {
           {(user?.role === 'MENTOR' || user?.role === 'ADMIN') && (
             <Link
               href="/mentor/dashboard"
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                 pathname === '/mentor/dashboard'
-                  ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                  ? 'bg-zinc-800 text-zinc-100'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
               }`}
             >
-              <LayoutDashboard className="h-4 w-4" />
-              Mentor Review Dashboard
+              <TableProperties className="h-3.5 w-3.5" />
+              Review Queue
             </Link>
           )}
         </nav>
 
-        {/* User / Auth State */}
+        {/* Right Section: Auth State */}
         <div className="flex items-center gap-3">
           {user ? (
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex flex-col text-right">
-                <span className="text-sm font-medium text-slate-200">{user.name}</span>
-                <span className="text-xs text-slate-400">{user.email}</span>
-              </div>
               <Badge
                 variant={
                   user.role === 'MENTOR'
@@ -90,31 +104,41 @@ export const Navbar: React.FC = () => {
                     ? 'destructive'
                     : 'info'
                 }
+                dot
               >
                 {user.role}
               </Badge>
+
+              <div className="flex items-center gap-2 pl-2 border-l border-zinc-800">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 text-xs font-medium text-zinc-200 border border-zinc-700/60">
+                  {getInitials(user.name)}
+                </div>
+                <div className="hidden sm:flex flex-col text-left">
+                  <span className="text-xs font-medium text-zinc-200 leading-none">{user.name}</span>
+                  <span className="text-[10px] text-zinc-500 font-mono mt-0.5">{user.email}</span>
+                </div>
+              </div>
+
               <Button
-                variant="outline"
-                size="sm"
+                variant="ghost"
+                size="icon"
                 onClick={logout}
-                className="gap-1.5 text-slate-300 hover:text-rose-400 hover:border-rose-500/30"
+                title="Sign Out"
+                className="h-7 w-7 text-zinc-400 hover:text-zinc-100"
               >
                 <LogOut className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Logout</span>
               </Button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
               <Link href="/login">
-                <Button variant="ghost" size="sm" className="gap-1.5">
-                  <LogIn className="h-4 w-4" />
-                  Login
+                <Button variant="ghost" size="sm">
+                  Sign In
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button variant="default" size="sm" className="gap-1.5">
-                  <UserPlus className="h-4 w-4" />
-                  Sign Up
+                <Button variant="default" size="sm">
+                  Create Account
                 </Button>
               </Link>
             </div>
