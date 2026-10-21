@@ -139,7 +139,7 @@ export const Navbar: React.FC = () => {
               </div>
             )
           ) : (
-            <div className="h-7 w-16" />
+            <div className="h-7 w-16" suppressHydrationWarning />
           )}
         </div>
       </div>
