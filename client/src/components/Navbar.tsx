@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -11,6 +11,11 @@ import { Layers, Send, TableProperties, LogOut, LogIn, CheckCircle2 } from 'luci
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth() as any;
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const getInitials = (name: string) => {
     if (!name) return 'U';
@@ -50,7 +55,7 @@ export const Navbar: React.FC = () => {
 
         {/* Center Navigation Links */}
         <nav className="hidden md:flex items-center gap-1">
-          {user?.role === 'STUDENT' && (
+          {mounted && user?.role === 'STUDENT' && (
             <>
               <Link
                 href="/student/submit"
@@ -77,7 +82,7 @@ export const Navbar: React.FC = () => {
             </>
           )}
 
-          {(user?.role === 'MENTOR' || user?.role === 'ADMIN') && (
+          {mounted && (user?.role === 'MENTOR' || user?.role === 'ADMIN') && (
             <Link
               href="/mentor/dashboard"
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
@@ -94,54 +99,58 @@ export const Navbar: React.FC = () => {
 
         {/* Right Section: Auth State */}
         <div className="flex items-center gap-3">
-          {user ? (
-            <div className="flex items-center gap-3">
-              <Badge
-                variant={
-                  user.role === 'MENTOR'
-                    ? 'warning'
-                    : user.role === 'ADMIN'
-                    ? 'destructive'
-                    : 'info'
-                }
-                dot
-              >
-                {user.role}
-              </Badge>
+          {mounted ? (
+            user ? (
+              <div className="flex items-center gap-3">
+                <Badge
+                  variant={
+                    user.role === 'MENTOR'
+                      ? 'warning'
+                      : user.role === 'ADMIN'
+                      ? 'destructive'
+                      : 'info'
+                  }
+                  dot
+                >
+                  {user.role}
+                </Badge>
 
-              <div className="flex items-center gap-2 pl-2 border-l border-zinc-800">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 text-xs font-medium text-zinc-200 border border-zinc-700/60">
-                  {getInitials(user.name)}
+                <div className="flex items-center gap-2 pl-2 border-l border-zinc-800">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 text-xs font-medium text-zinc-200 border border-zinc-700/60">
+                    {getInitials(user.name)}
+                  </div>
+                  <div className="hidden sm:flex flex-col text-left">
+                    <span className="text-xs font-medium text-zinc-200 leading-none">{user.name}</span>
+                    <span className="text-[10px] text-zinc-500 font-mono mt-0.5">{user.email}</span>
+                  </div>
                 </div>
-                <div className="hidden sm:flex flex-col text-left">
-                  <span className="text-xs font-medium text-zinc-200 leading-none">{user.name}</span>
-                  <span className="text-[10px] text-zinc-500 font-mono mt-0.5">{user.email}</span>
-                </div>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={logout}
+                  title="Sign Out"
+                  className="h-7 w-7 text-zinc-400 hover:text-zinc-100"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                </Button>
               </div>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={logout}
-                title="Sign Out"
-                className="h-7 w-7 text-zinc-400 hover:text-zinc-100"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link href="/login">
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button variant="default" size="sm">
+                    Create Account
+                  </Button>
+                </Link>
+              </div>
+            )
           ) : (
-            <div className="flex items-center gap-2">
-              <Link href="/login">
-                <Button variant="ghost" size="sm">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/signup">
-                <Button variant="default" size="sm">
-                  Create Account
-                </Button>
-              </Link>
-            </div>
+            <div className="h-7 w-16" />
           )}
         </div>
       </div>
