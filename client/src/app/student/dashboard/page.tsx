@@ -97,12 +97,9 @@ export default function StudentDashboardPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-zinc-800/80 mb-6">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">
-              Deliverables Log & Reviews
-            </h1>
-            <span className="text-xs font-mono text-zinc-500">• Candidate History</span>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">
+            Deliverables Log & Reviews
+          </h1>
           <p className="text-xs text-zinc-400 mt-1">
             Real-time verification log, reviewer notes, and assessment history
           </p>

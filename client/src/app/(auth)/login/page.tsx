@@ -2,35 +2,22 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Layers, Terminal, GitBranch } from 'lucide-react';
+import { Layers } from 'lucide-react';
 
 function LoginForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { login, user } = useAuth() as any;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const queryEmail = searchParams.get('email');
-    if (queryEmail) {
-      setEmail(queryEmail);
-      if (queryEmail.includes('mentor')) {
-        setPassword('Mentor@12345');
-      } else {
-        setPassword('Student@12345');
-      }
-    }
-  }, [searchParams]);
 
   useEffect(() => {
     if (user) {
@@ -69,12 +56,6 @@ function LoginForm() {
     }
   };
 
-  const handleDemoFill = (testEmail: string, testPass: string) => {
-    setEmail(testEmail);
-    setPassword(testPass);
-    setError(null);
-  };
-
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center p-4 subtle-grid">
       <div className="w-full max-w-sm">
@@ -84,28 +65,7 @@ function LoginForm() {
             <Layers className="h-5 w-5" />
           </div>
           <h2 className="text-xl font-semibold tracking-tight text-white">Sign In to CodeReview</h2>
-          <p className="text-xs text-zinc-400 mt-1">Enter credentials or select quick demo profile</p>
-        </div>
-
-        {/* Demo Fast Switcher Strip */}
-        <div className="flex items-center justify-center gap-1.5 p-1 mb-5 rounded-lg border border-zinc-800/80 bg-zinc-900/40 font-mono text-[11px]">
-          <span className="text-zinc-500 px-1 hidden sm:inline">Demo:</span>
-          <button
-            type="button"
-            onClick={() => handleDemoFill('mentor@programming-hero.com', 'Mentor@12345')}
-            className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white transition-colors"
-          >
-            <Terminal className="h-3 w-3 text-amber-400" />
-            Lead Mentor
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDemoFill('tanvir@student.ph', 'Student@12345')}
-            className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white transition-colors"
-          >
-            <GitBranch className="h-3 w-3 text-blue-400" />
-            Candidate
-          </button>
+          <p className="text-xs text-zinc-400 mt-1">Enter your credentials to access your dashboard</p>
         </div>
 
         {/* Card */}

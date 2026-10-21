@@ -242,14 +242,11 @@ export default function MentorDashboardPage() {
       {/* Page Title & Action Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-zinc-800/80">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">
-              Evaluation & Review Queue
-            </h1>
-            <span className="text-xs font-mono text-zinc-500">• Server-Side Filtered</span>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">
+            Evaluation & Review Queue
+          </h1>
           <p className="text-xs text-zinc-400 mt-1">
-            Real-time pipeline monitoring, deliverable approvals, and student feedback evaluation
+            Pipeline monitoring, deliverable approvals, and student feedback evaluation
           </p>
         </div>
 
@@ -275,7 +272,6 @@ export default function MentorDashboardPage() {
         <div className="p-4 rounded-lg border border-zinc-800/80 bg-zinc-950/40">
           <div className="flex items-center justify-between text-xs text-zinc-400">
             <span>Total Deliverables</span>
-            <span className="font-mono text-[10px] text-zinc-500">DATABASE</span>
           </div>
           <div className="text-2xl font-bold font-mono text-white mt-1">{stats.total}</div>
           <div className="text-[11px] text-zinc-500 mt-1">{stats.totalStudents} enrolled candidates</div>

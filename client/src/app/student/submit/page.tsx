@@ -133,12 +133,9 @@ export default function StudentSubmitPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-zinc-800/80 mb-6">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">
-              Deliverable Ingestion Portal
-            </h1>
-            <span className="text-xs font-mono text-zinc-500">• Candidate View</span>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">
+            Deliverable Ingestion Portal
+          </h1>
           <p className="text-xs text-zinc-400 mt-1">
             Submit your project repository and live deployment for reviewer assessment
           </p>
@@ -231,12 +228,6 @@ export default function StudentSubmitPage() {
               </Button>
             </div>
           </form>
-
-          {/* Inline Compliance Notice */}
-          <div className="p-3 rounded-md border border-zinc-800/80 bg-zinc-950/40 text-[11px] font-mono text-zinc-500 flex items-center justify-between">
-            <span>Rate Limit: Max 10 requests / 15m window</span>
-            <span>Unique Composite Index Guard: ON</span>
-          </div>
         </div>
 
         {/* Right Live Preview Column (5 Cols) */}

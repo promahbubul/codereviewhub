@@ -36,21 +36,10 @@ export const Navbar: React.FC = () => {
             <div className="flex h-7 w-7 items-center justify-center rounded-md bg-zinc-100 text-zinc-900 group-hover:bg-white transition-colors">
               <Layers className="h-4 w-4" />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold tracking-tight text-zinc-100">
-                CodeReview<span className="text-zinc-500 font-normal">Hub</span>
-              </span>
-              <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-mono text-zinc-400">
-                v1.0
-              </span>
-            </div>
+            <span className="text-sm font-semibold tracking-tight text-zinc-100">
+              CodeReview<span className="text-zinc-500 font-normal">Hub</span>
+            </span>
           </Link>
-
-          {/* System Status Pill (Desktop) */}
-          <div className="hidden lg:flex items-center gap-1.5 text-[11px] font-mono text-zinc-400 border border-zinc-800/80 bg-zinc-900/40 px-2 py-0.5 rounded-full">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Operational</span>
-          </div>
         </div>
 
         {/* Center Navigation Links */}
