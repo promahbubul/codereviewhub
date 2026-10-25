@@ -13,7 +13,7 @@ A production-grade, defensive full-stack web application designed for student pr
 
 ### 🛠️ Technology Stack
 * **Language:** TypeScript (Strict Mode throughout client and server)
-* **Frontend:** Next.js (App Router), Tailwind CSS, ShadCN UI aesthetic design system, Lucide Icons
+* **Frontend:** Next.js (App Router), Tailwind CSS v4, ShadCN UI (Radix primitives + CVA variants: Dialog, Table, Button, Badge...), Lucide Icons
 * **Backend:** Express.js + TypeScript RESTful architecture
 * **Database & ORM:** PostgreSQL (Neon Cloud) + Prisma ORM
 * **Authentication:** JWT (JSON Web Tokens) with role enforcement (`STUDENT`, `MENTOR`, `ADMIN`)
@@ -74,7 +74,7 @@ The cloud PostgreSQL database comes pre-seeded with sample submissions and test 
 │   │   │   ├── student/submit/  # Project submission portal
 │   │   │   ├── student/dashboard/# Student submission history & feedback
 │   │   │   └── mentor/dashboard/# Paginated review table, stats & actions
-│   │   ├── components/ui/       # Reusable design system (Button, Badge, Card, etc.)
+│   │   ├── components/ui/       # ShadCN UI components (components.json)
 │   │   ├── context/AuthContext  # JWT auth context & session provider
 │   │   └── lib/api.ts           # Axios client with JWT request interceptor
 │   └── package.json

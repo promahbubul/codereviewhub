@@ -9,6 +9,22 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { toast } from 'sonner';
 import {
   Search,
@@ -22,7 +38,6 @@ import {
   ExternalLink,
   ShieldAlert,
   SlidersHorizontal,
-  X,
   FileCode2,
 } from 'lucide-react';
 import { GithubIcon } from '@/components/ui/icons';
@@ -350,30 +365,29 @@ export default function MentorDashboardPage() {
 
       {/* Enterprise Data Table */}
       <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/60 overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-zinc-900/60 text-[11px] font-mono text-zinc-400 border-b border-zinc-800/80">
-              <tr>
-                <th className="py-3 px-4 font-medium">CANDIDATE</th>
-                <th className="py-3 px-4 font-medium">PROJECT & REPOSITORY</th>
-                <th className="py-3 px-4 font-medium">SUBMISSION DATE</th>
-                <th className="py-3 px-4 font-medium">EVALUATION</th>
-                <th className="py-3 px-4 font-medium text-right">ACTION</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-900/80">
+        <Table className="text-left text-xs">
+            <TableHeader className="bg-zinc-900/60 text-[11px] font-mono">
+              <TableRow className="border-zinc-800/80 hover:bg-transparent">
+                <TableHead className="h-auto py-3 px-4 font-medium text-zinc-400">CANDIDATE</TableHead>
+                <TableHead className="h-auto py-3 px-4 font-medium text-zinc-400">PROJECT & REPOSITORY</TableHead>
+                <TableHead className="h-auto py-3 px-4 font-medium text-zinc-400">SUBMISSION DATE</TableHead>
+                <TableHead className="h-auto py-3 px-4 font-medium text-zinc-400">EVALUATION</TableHead>
+                <TableHead className="h-auto py-3 px-4 font-medium text-zinc-400 text-right">ACTION</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {isLoading ? (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-zinc-500">
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={5} className="py-12 text-center text-zinc-500">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-400 border-t-transparent" />
                       <span className="font-mono text-xs">Querying database...</span>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : submissions.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-zinc-500">
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={5} className="py-12 text-center text-zinc-500">
                     <div className="flex flex-col items-center justify-center gap-1">
                       <SlidersHorizontal className="h-6 w-6 text-zinc-600 mb-1" />
                       <p className="text-xs font-medium text-zinc-300">No matching submissions found</p>
@@ -383,13 +397,13 @@ export default function MentorDashboardPage() {
                           : 'No submissions have been recorded in the database.'}
                       </p>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 submissions.map((sub) => (
-                  <tr key={sub.id} className="hover:bg-zinc-900/40 transition-colors">
+                  <TableRow key={sub.id} className="border-zinc-900/80 hover:bg-zinc-900/40">
                     {/* Candidate */}
-                    <td className="py-3.5 px-4 align-top">
+                    <TableCell className="py-3.5 px-4 align-top whitespace-normal">
                       <div className="flex items-center gap-2.5">
                         <div className="h-7 w-7 rounded-full bg-zinc-800 text-zinc-300 flex items-center justify-center font-mono text-[10px] border border-zinc-700/60 shrink-0">
                           {getInitials(sub.student.name)}
@@ -399,10 +413,10 @@ export default function MentorDashboardPage() {
                           <div className="text-[11px] font-mono text-zinc-500">{sub.student.email}</div>
                         </div>
                       </div>
-                    </td>
+                    </TableCell>
 
                     {/* Project & Repos */}
-                    <td className="py-3.5 px-4 align-top max-w-sm">
+                    <TableCell className="py-3.5 px-4 align-top whitespace-normal max-w-sm">
                       <div className="font-medium text-zinc-100">{sub.projectName}</div>
                       <p className="text-[11px] text-zinc-400 line-clamp-1 mt-0.5">
                         {sub.description}
@@ -433,20 +447,20 @@ export default function MentorDashboardPage() {
                           {sub.feedback}
                         </div>
                       )}
-                    </td>
+                    </TableCell>
 
                     {/* Date */}
-                    <td className="py-3.5 px-4 align-top font-mono text-[11px] text-zinc-400 whitespace-nowrap">
+                    <TableCell className="py-3.5 px-4 align-top font-mono text-[11px] text-zinc-400">
                       {formatDate(sub.createdAt)}
-                    </td>
+                    </TableCell>
 
                     {/* Status Pill */}
-                    <td className="py-3.5 px-4 align-top whitespace-nowrap">
+                    <TableCell className="py-3.5 px-4 align-top">
                       {getStatusBadge(sub.status)}
-                    </td>
+                    </TableCell>
 
                     {/* Actions */}
-                    <td className="py-3.5 px-4 align-top text-right whitespace-nowrap">
+                    <TableCell className="py-3.5 px-4 align-top text-right">
                       <Button
                         size="sm"
                         variant={sub.status === 'PENDING' ? 'default' : 'outline'}
@@ -455,13 +469,12 @@ export default function MentorDashboardPage() {
                       >
                         {sub.status === 'PENDING' ? 'Review & Grade' : 'Inspect'}
                       </Button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
 
         {/* Server-Side Pagination Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between p-3 border-t border-zinc-800/80 bg-zinc-950/80 text-[11px] font-mono text-zinc-400 gap-2">
@@ -508,24 +521,23 @@ export default function MentorDashboardPage() {
       </div>
 
       {/* Review Inspector Command Dialog */}
-      {selectedSubmission && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
-          <div className="w-full max-w-xl rounded-xl border border-zinc-800 bg-zinc-950 shadow-2xl overflow-hidden">
+      <Dialog
+        open={selectedSubmission !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedSubmission(null);
+        }}
+      >
+        {selectedSubmission && (
+          <DialogContent className="gap-0 p-0 sm:max-w-xl border-zinc-800 bg-zinc-950 overflow-hidden">
             {/* Modal Header */}
-            <div className="p-5 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/40">
-              <div>
-                <h3 className="text-sm font-semibold text-white">Evaluate Candidate Deliverable</h3>
-                <p className="text-xs text-zinc-400 mt-0.5 font-mono">
-                  {selectedSubmission.student.name} ({selectedSubmission.student.email})
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedSubmission(null)}
-                className="text-zinc-400 hover:text-white p-1"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+            <DialogHeader className="p-5 pr-12 border-b border-zinc-800 bg-zinc-900/40 gap-0.5">
+              <DialogTitle className="text-sm font-semibold text-white">
+                Evaluate Candidate Deliverable
+              </DialogTitle>
+              <DialogDescription className="text-xs text-zinc-400 font-mono">
+                {selectedSubmission.student.name} ({selectedSubmission.student.email})
+              </DialogDescription>
+            </DialogHeader>
 
             <form onSubmit={handleStatusUpdate} className="p-5 space-y-4">
               {/* Project Card */}
@@ -628,7 +640,7 @@ export default function MentorDashboardPage() {
               </div>
 
               {/* Modal Actions */}
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-800">
+              <DialogFooter className="pt-3 border-t border-zinc-800">
                 <Button
                   type="button"
                   variant="outline"
@@ -646,11 +658,11 @@ export default function MentorDashboardPage() {
                 >
                   Confirm {actionStatus}
                 </Button>
-              </div>
+              </DialogFooter>
             </form>
-          </div>
-        </div>
-      )}
+          </DialogContent>
+        )}
+      </Dialog>
     </div>
   );
 }

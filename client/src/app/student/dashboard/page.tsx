@@ -110,12 +110,12 @@ export default function StudentDashboardPage() {
             <RefreshCw className="h-3.5 w-3.5" />
             Refresh
           </Button>
-          <Link href="/student/submit">
-            <Button size="sm" className="gap-1.5 font-medium">
+          <Button asChild size="sm" className="gap-1.5 font-medium">
+            <Link href="/student/submit">
               <Send className="h-3.5 w-3.5" />
               New Submission
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -143,12 +143,12 @@ export default function StudentDashboardPage() {
           <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
             You have not submitted any projects to the evaluation queue yet.
           </p>
-          <Link href="/student/submit">
-            <Button size="sm" className="mt-4 gap-1.5">
+          <Button asChild size="sm" className="mt-4 gap-1.5">
+            <Link href="/student/submit">
               <Send className="h-3.5 w-3.5" />
               Submit First Project
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       ) : (
         <div className="space-y-4">

@@ -23,17 +23,17 @@ export default function HomePage() {
 
         {/* Call to Actions */}
         <div className="mt-10 flex items-center justify-center gap-3" suppressHydrationWarning>
-          <Link href="/signup">
-            <Button size="lg" className="gap-2 font-medium">
+          <Button asChild size="lg" className="gap-2 font-medium">
+            <Link href="/signup">
               Get Started
               <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-          <Link href="/login">
-            <Button size="lg" variant="outline" className="font-medium">
+            </Link>
+          </Button>
+          <Button asChild size="lg" variant="outline" className="font-medium">
+            <Link href="/login">
               Sign In
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </section>
 

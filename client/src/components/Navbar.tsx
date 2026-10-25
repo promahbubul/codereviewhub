@@ -126,16 +126,16 @@ export const Navbar: React.FC = () => {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Link href="/login">
-                  <Button variant="ghost" size="sm">
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/login">
                     Sign In
-                  </Button>
-                </Link>
-                <Link href="/signup">
-                  <Button variant="default" size="sm">
+                  </Link>
+                </Button>
+                <Button asChild variant="default" size="sm">
+                  <Link href="/signup">
                     Create Account
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             )
           ) : (

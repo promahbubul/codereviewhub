@@ -141,12 +141,12 @@ export default function StudentSubmitPage() {
           </p>
         </div>
 
-        <Link href="/student/dashboard">
-          <Button variant="outline" size="sm" className="gap-1.5 font-mono text-xs">
+        <Button asChild variant="outline" size="sm" className="gap-1.5 font-mono text-xs">
+          <Link href="/student/dashboard">
             <History className="h-3.5 w-3.5" />
             Submission Log
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
 
       {/* Split-Screen Layout */}
