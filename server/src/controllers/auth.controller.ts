@@ -4,7 +4,11 @@ import jwt from 'jsonwebtoken';
 import { Role } from '@prisma/client';
 import prisma from '../prisma';
 import { SignupInput, LoginInput } from '../validators/auth.validator';
-import { AuthRequest } from '../types';
+import { AuthRequest, JwtPayload } from '../types';
+import { env } from '../config/env';
+
+const signToken = (payload: JwtPayload): string =>
+  jwt.sign(payload, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN });
 
 export const signup = async (req: Request<{}, {}, SignupInput>, res: Response): Promise<void> => {
   try {
@@ -45,16 +49,7 @@ export const signup = async (req: Request<{}, {}, SignupInput>, res: Response): 
     });
 
     // Generate JWT Token
-    const secret = process.env.JWT_SECRET || 'super_secret_jwt_key_programming_hero_task_2026_secure';
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      secret,
-      { expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as jwt.SignOptions['expiresIn'] }
-    );
+    const token = signToken({ id: user.id, email: user.email, role: user.role });
 
     res.status(201).json({
       success: true,
@@ -101,16 +96,7 @@ export const login = async (req: Request<{}, {}, LoginInput>, res: Response): Pr
     }
 
     // Sign JWT
-    const secret = process.env.JWT_SECRET || 'super_secret_jwt_key_programming_hero_task_2026_secure';
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      secret,
-      { expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as jwt.SignOptions['expiresIn'] }
-    );
+    const token = signToken({ id: user.id, email: user.email, role: user.role });
 
     res.status(200).json({
       success: true,

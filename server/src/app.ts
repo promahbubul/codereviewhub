@@ -1,29 +1,24 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
+import { env } from './config/env';
 import routes from './routes';
 import { errorHandler } from './middlewares/error.middleware';
 
-dotenv.config();
-
 const app: Application = express();
+
+const allowedOrigins = [env.CLIENT_URL, 'http://localhost:3000', 'http://127.0.0.1:3000'];
 
 // Security middlewares
 app.use(helmet());
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, postman) or localhost/client origins
-      const allowedOrigins = [
-        process.env.CLIENT_URL || 'http://localhost:3000',
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-      ];
+      // Allow requests with no origin (curl, Postman, server-to-server) or a whitelisted client origin
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(null, true); // Permissive for assessment testing
+        callback(Object.assign(new Error(`CORS: Origin ${origin} is not allowed`), { status: 403 }));
       }
     },
     credentials: true,

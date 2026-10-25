@@ -32,7 +32,6 @@ The cloud PostgreSQL database comes pre-seeded with sample submissions and test 
 | **Student (Tanvir)** | `tanvir@student.ph` | `Student@12345` | Project submission portal, duplicate prevention check, my submissions |
 | **System Admin** | `admin@programming-hero.com` | `Admin@12345` | Full administrative evaluation privileges |
 
-*(Note: The login page includes convenient **1-Click Test Login** buttons for instant reviewer evaluation).*
 
 ---
 
@@ -70,7 +69,7 @@ The cloud PostgreSQL database comes pre-seeded with sample submissions and test 
 ├── client/                      # Next.js Frontend Application
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── (auth)/login/    # Login with 1-click test credentials
+│   │   │   ├── (auth)/login/    # Login page (role-based redirect)
 │   │   │   ├── (auth)/signup/   # Student signup page
 │   │   │   ├── student/submit/  # Project submission portal
 │   │   │   ├── student/dashboard/# Student submission history & feedback

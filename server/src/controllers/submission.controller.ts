@@ -12,14 +12,11 @@ export const createSubmission = async (
     const { projectName, repoUrl, liveUrl, description } = req.body as CreateSubmissionInput;
 
     // Duplicate Prevention Check:
-    // Check if the student has already submitted a project with the same repository URL
-    const existingSubmission = await prisma.submission.findFirst({
+    // repoUrl is already canonicalized by the validator, so an exact match on the
+    // (studentId, repoUrl) unique index catches trailing slashes, ".git", casing, etc.
+    const existingSubmission = await prisma.submission.findUnique({
       where: {
-        studentId,
-        repoUrl: {
-          equals: repoUrl.trim(),
-          mode: 'insensitive',
-        },
+        studentId_repoUrl: { studentId, repoUrl },
       },
     });
 
@@ -39,7 +36,7 @@ export const createSubmission = async (
     const newSubmission = await prisma.submission.create({
       data: {
         projectName: projectName.trim(),
-        repoUrl: repoUrl.trim(),
+        repoUrl,
         liveUrl: liveUrl.trim(),
         description: description.trim(),
         studentId,

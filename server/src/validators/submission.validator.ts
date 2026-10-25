@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { SubmissionStatus } from '@prisma/client';
+import { normalizeRepoUrl } from '../utils/url';
 
 export const createSubmissionSchema = z.object({
   projectName: z
@@ -14,7 +15,8 @@ export const createSubmissionSchema = z.object({
     .refine(
       (url) => url.startsWith('http://') || url.startsWith('https://'),
       'Repository URL must start with http:// or https://'
-    ),
+    )
+    .transform(normalizeRepoUrl),
   liveUrl: z
     .string({ required_error: 'Live deployment URL is required' })
     .trim()
