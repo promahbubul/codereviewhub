@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/api';
+import api, { getApiErrorMessage } from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -12,7 +12,7 @@ import { Layers } from 'lucide-react';
 
 function LoginForm() {
   const router = useRouter();
-  const { login, user } = useAuth() as any;
+  const { login, user } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -47,8 +47,8 @@ function LoginForm() {
           router.push('/student/submit');
         }
       }
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Authentication failed. Please verify credentials.';
+    } catch (err) {
+      const msg = getApiErrorMessage(err, 'Authentication failed. Please verify credentials.');
       setError(msg);
       toast.error(msg);
     } finally {

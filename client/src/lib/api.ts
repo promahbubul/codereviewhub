@@ -37,4 +37,12 @@ api.interceptors.response.use(
   }
 );
 
+// Pulls the server's `{ message }` out of a failed request, with a fallback for network errors
+export const getApiErrorMessage = (error: unknown, fallback: string): string => {
+  if (axios.isAxiosError<{ message?: string }>(error)) {
+    return error.response?.data?.message || fallback;
+  }
+  return fallback;
+};
+
 export default api;

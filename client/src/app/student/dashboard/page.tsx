@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/api';
+import api, { getApiErrorMessage } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,7 +41,7 @@ interface Submission {
 
 export default function StudentDashboardPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth() as any;
+  const { user, isLoading: authLoading } = useAuth();
 
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,8 +55,8 @@ export default function StudentDashboardPage() {
       if (res.data.success) {
         setSubmissions(res.data.data);
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch deliverables log');
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to fetch deliverables log'));
     } finally {
       setIsLoading(false);
     }

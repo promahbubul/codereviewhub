@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/api';
+import api, { getApiErrorMessage } from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -59,7 +59,7 @@ type SubmissionFormValues = z.infer<typeof submissionFormSchema>;
 
 export default function StudentSubmitPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth() as any;
+  const { user, isLoading: authLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -101,9 +101,9 @@ export default function StudentSubmitPage() {
         reset();
         router.push('/student/dashboard');
       }
-    } catch (err: any) {
+    } catch (err) {
       const errorMsg =
-        err.response?.data?.message || 'Failed to submit project. Please verify inputs.';
+        getApiErrorMessage(err, 'Failed to submit project. Please verify inputs.');
       setServerError(errorMsg);
       toast.error(errorMsg);
     } finally {

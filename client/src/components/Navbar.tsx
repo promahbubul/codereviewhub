@@ -9,7 +9,7 @@ import { Button } from './ui/button';
 import { Layers, Send, TableProperties, LogOut, LogIn, CheckCircle2 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
-  const { user, logout } = useAuth() as any;
+  const { user, logout } = useAuth();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 

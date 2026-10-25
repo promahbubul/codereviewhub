@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/api';
+import api, { getApiErrorMessage } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -84,7 +84,7 @@ interface PaginationMeta {
 
 export default function MentorDashboardPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth() as any;
+  const { user, isLoading: authLoading } = useAuth();
 
   // Data state
   const [submissions, setSubmissions] = useState<SubmissionItem[]>([]);
@@ -106,6 +106,7 @@ export default function MentorDashboardPage() {
 
   // Query state
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
+  const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -132,7 +133,7 @@ export default function MentorDashboardPage() {
   const fetchSubmissions = useCallback(async () => {
     setIsLoading(true);
     try {
-      const params: any = {
+      const params: Record<string, string | number> = {
         page: currentPage,
         limit: 10,
       };
@@ -150,27 +151,45 @@ export default function MentorDashboardPage() {
         setSubmissions(res.data.data);
         setMeta(res.data.meta);
       }
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to fetch review queue');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Failed to fetch review queue'));
     } finally {
       setIsLoading(false);
     }
   }, [currentPage, statusFilter, searchTerm]);
+
+  const canReview = user?.role === 'MENTOR' || user?.role === 'ADMIN';
 
   // Auth Guard
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
         router.push('/login');
-      } else if (user.role !== 'MENTOR' && user.role !== 'ADMIN') {
+      } else if (!canReview) {
         router.push('/student/submit');
         toast.error('Access Denied: Mentor permissions required.');
-      } else {
-        fetchStats();
-        fetchSubmissions();
       }
     }
-  }, [user, authLoading, router, fetchStats, fetchSubmissions]);
+  }, [user, authLoading, canReview, router]);
+
+  // Debounce search: only hit the API once the mentor stops typing for 400ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchTerm(searchInput.trim());
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Stats are global, so they don't depend on page/filter/search
+  useEffect(() => {
+    if (canReview) fetchStats();
+  }, [canReview, fetchStats]);
+
+  // Re-query the table whenever page, status filter, or (debounced) search changes
+  useEffect(() => {
+    if (canReview) fetchSubmissions();
+  }, [canReview, fetchSubmissions]);
 
   // Open review inspector modal
   const openReviewModal = (sub: SubmissionItem) => {
@@ -183,6 +202,12 @@ export default function MentorDashboardPage() {
   const handleStatusUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedSubmission) return;
+
+    // Mirrors the server rule: a rejection must tell the student what to fix
+    if (actionStatus === 'REJECTED' && feedbackText.trim().length < 10) {
+      toast.error('Please add at least 10 characters of feedback before rejecting.');
+      return;
+    }
 
     setIsActionLoading(true);
     try {
@@ -197,8 +222,8 @@ export default function MentorDashboardPage() {
         fetchStats();
         fetchSubmissions();
       }
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to update evaluation status.');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Failed to update evaluation status.'));
     } finally {
       setIsActionLoading(false);
     }
@@ -352,11 +377,8 @@ export default function MentorDashboardPage() {
         <div className="relative w-full sm:w-64">
           <Input
             placeholder="Search student or repo..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="pl-8 text-xs h-8 bg-zinc-950/60"
           />
           <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-zinc-500 pointer-events-none" />
@@ -608,7 +630,7 @@ export default function MentorDashboardPage() {
               <div>
                 <div className="flex items-center justify-between text-xs mb-1.5">
                   <label className="font-mono text-zinc-400 uppercase text-[11px]">
-                    Feedback & Recommendations
+                    Feedback & Recommendations{actionStatus === 'REJECTED' && ' *'}
                   </label>
                   <span className="text-[10px] text-zinc-500">Quick preset chips:</span>
                 </div>
@@ -633,7 +655,11 @@ export default function MentorDashboardPage() {
 
                 <Textarea
                   rows={3}
-                  placeholder="Leave actionable review notes for the candidate..."
+                  placeholder={
+                    actionStatus === 'REJECTED'
+                      ? 'Required: explain what the candidate needs to fix...'
+                      : 'Leave actionable review notes for the candidate...'
+                  }
                   value={feedbackText}
                   onChange={(e) => setFeedbackText(e.target.value)}
                 />

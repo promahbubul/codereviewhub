@@ -40,8 +40,8 @@ The cloud PostgreSQL database comes pre-seeded with sample submissions and test 
 ### 1. Student Submission Portal (`/student/submit` & `/student/dashboard`)
 * ✅ **Comprehensive Form:** Project name, GitHub Repository URL, Live Deployment URL, and Technical Description.
 * ✅ **Defensive Validation:** Strict Zod schema enforcing valid URL protocols (`http/https`), string length boundaries, and sanitized text.
-* ✅ **Duplicate Prevention:** Evaluated both in backend business logic and PostgreSQL unique composite index (`@@unique([studentId, repoUrl])`). Prevents submitting duplicate project repositories.
-* ✅ **Anti-Spam Rate Limit:** Protected by `express-rate-limit` (sliding window of 10 requests / 15 minutes per IP/User).
+* ✅ **Duplicate Prevention:** Repo URLs are canonicalized (case, `www.`, trailing `/`, `.git`, query string) before hitting the PostgreSQL composite unique index (`@@unique([studentId, repoUrl])`), so cosmetic variants of the same repository are rejected with `409 Conflict`.
+* ✅ **Anti-Spam Rate Limit:** Protected by `express-rate-limit` (10 submissions / 15 minutes, keyed per authenticated student so shared campus IPs do not block each other).
 * ✅ **Student History Portal:** Real-time visibility into previous submissions, review status badges (`Pending`, `Approved`, `Rejected`), and constructive mentor feedback notes.
 
 ### 2. Mentor Review Dashboard (`/mentor/dashboard`)
@@ -52,8 +52,8 @@ The cloud PostgreSQL database comes pre-seeded with sample submissions and test 
   * Total Rejected Projects
 * ✅ **Server-Side Filtering:** Query-driven filtering (`?status=APPROVED`, `?status=REJECTED`, `?status=PENDING`) executed on the database level.
 * ✅ **Paginated Data Table:** Server-side pagination (`page`, `limit`, `totalPages`) with quick navigation controls.
-* ✅ **Approval / Rejection Action Modal:** Allows mentors to approve or reject submissions with detailed feedback notes recorded alongside mentor identity and timestamps.
-* ✅ **Search:** Instant query search matching project name, repo URL, student name, or student email.
+* ✅ **Approval / Rejection Action Modal:** Accessible ShadCN Dialog to approve or reject submissions. Rejections require feedback (min 10 chars, enforced on both client and server) so students always know what to fix. Reviewer identity and timestamp are recorded.
+* ✅ **Search:** Debounced (400ms) server-side search matching project name, repo URL, student name, or student email.
 
 ### 3. Authentication & RBAC (`/login` & `/signup`)
 * ✅ Secure password hashing with `bcryptjs` (salt rounds: 10).

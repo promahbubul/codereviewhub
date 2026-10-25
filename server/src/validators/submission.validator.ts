@@ -42,6 +42,15 @@ export const updateStatusSchema = z.object({
     .max(1000, 'Feedback cannot exceed 1000 characters')
     .optional()
     .nullable(),
+}).superRefine((data, ctx) => {
+  // A rejection without a reason leaves the student with nothing to act on
+  if (data.status === SubmissionStatus.REJECTED && (data.feedback?.length ?? 0) < 10) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['feedback'],
+      message: 'Feedback of at least 10 characters is required when rejecting a submission',
+    });
+  }
 });
 
 export type CreateSubmissionInput = z.infer<typeof createSubmissionSchema>;

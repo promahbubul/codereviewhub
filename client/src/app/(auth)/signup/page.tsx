@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/api';
+import api, { getApiErrorMessage } from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -12,7 +12,7 @@ import { Layers } from 'lucide-react';
 
 export default function SignupPage() {
   const router = useRouter();
-  const { login } = useAuth() as any;
+  const { login } = useAuth();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -45,8 +45,8 @@ export default function SignupPage() {
         toast.success('Candidate profile registered');
         router.push('/student/submit');
       }
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Registration failed. Please check inputs.';
+    } catch (err) {
+      const msg = getApiErrorMessage(err, 'Registration failed. Please check inputs.');
       setError(msg);
       toast.error(msg);
     } finally {
