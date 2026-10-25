@@ -1,9 +1,7 @@
 # 🚀 Fullstack Project Submission & Review Dashboard
 
 > **Hiring Assessment:** Associate Web Instructor  
-> **Organization:** Programming Hero & Next Level Recruitment Team  
-> **Candidate Submission Deadline:** October 25, 2026 (11:59 PM)  
-> **Submission URL:** [Assessment Submission Google Form](https://forms.gle/uoYk7kb1zvTAfqow8)
+> **Organization:** Programming Hero & Next Level Recruitment Team
 
 ---
 
@@ -90,9 +88,6 @@ The cloud PostgreSQL database comes pre-seeded with sample submissions and test 
 │   │   └── server.ts            # Server bootstrap
 │   └── package.json
 │
-├── Web Instructor - Hiring Task.pdf
-├── email.txt
-├── PROJECT_PLAN.md              # Detailed planning & video strategy document
 └── README.md
 ```
 
@@ -154,14 +149,9 @@ npm run dev:client
 
 ---
 
-## 🎥 Part 2: Video Presentation Strategy (Bengali, OBS)
+## 🎥 Video Lessons (Bengali)
 
-As instructed in the assessment document:
-* **OBS Setup:** Screen recording with facecam located in the **lower-right corner**.
-* **Language:** Bengali.
-* **Duration:** 10–12 minutes strictly per video.
-
-### Selected Topics:
+This project is used as the teaching material for two lessons:
 1. **Video 1 (Category 1 - Theoretical Concept):**
    * **Topic 1C:** *Authentication vs. Authorization (RBAC)*
    * Demystifying identity verification (AuthN) vs permission enforcement (AuthZ).
