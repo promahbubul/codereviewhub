@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 
 export type Role = 'STUDENT' | 'MENTOR' | 'ADMIN';
@@ -18,7 +19,6 @@ interface AuthContextType {
   isLoading: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
-  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,49 +27,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const router = useRouter();
 
-  const refreshUser = async () => {
-    try {
-      const storedToken = localStorage.getItem('auth_token');
-      if (!storedToken) {
-        setUser(null);
-        setToken(null);
-        setIsLoading(false);
-        return;
-      }
-
-      setToken(storedToken);
-      const res = await api.get('/auth/me');
-      if (res.data.success && res.data.data.user) {
-        setUser(res.data.data.user);
-        localStorage.setItem('auth_user', JSON.stringify(res.data.data.user));
-      }
-    } catch (error) {
-      console.error('Failed to restore session:', error);
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('auth_user');
-      setUser(null);
-      setToken(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Restore the session once on mount. The stored token is re-validated with the server (/auth/me)
+  // instead of trusting the cached user object, so a stale or tampered localStorage entry can't
+  // grant UI access. Pages wait on `isLoading` until this resolves.
   useEffect(() => {
-    // Initial load from localStorage
-    const storedUser = localStorage.getItem('auth_user');
+    let ignore = false;
     const storedToken = localStorage.getItem('auth_token');
 
-    if (storedUser && storedToken) {
-      try {
-        setUser(JSON.parse(storedUser));
-        setToken(storedToken);
-      } catch {
-        // parsing failed
-      }
-    }
+    const restore: Promise<User | null> = storedToken
+      ? api.get('/auth/me').then((res) => (res.data.success ? (res.data.data.user as User) : null))
+      : Promise.resolve(null);
 
-    refreshUser();
+    restore
+      .then((restoredUser) => {
+        if (ignore) return;
+        setUser(restoredUser);
+        setToken(restoredUser ? storedToken : null);
+        if (restoredUser) localStorage.setItem('auth_user', JSON.stringify(restoredUser));
+      })
+      .catch((error) => {
+        console.error('Failed to restore session:', error);
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+      })
+      .finally(() => {
+        if (!ignore) setIsLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const login = (newToken: string, newUser: User) => {
@@ -84,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('auth_user');
     setToken(null);
     setUser(null);
-    window.location.href = '/login';
+    router.replace('/login');
   };
 
   return (
@@ -95,7 +84,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         login,
         logout,
-        refreshUser,
       }}
     >
       {children}

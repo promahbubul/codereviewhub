@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/context/AuthContext';
@@ -16,13 +16,9 @@ import { toast } from 'sonner';
 import {
   Send,
   Globe,
-  FolderGit2,
   AlertCircle,
   History,
   Eye,
-  CheckCircle2,
-  Clock,
-  ExternalLink,
 } from 'lucide-react';
 import { GithubIcon } from '@/components/ui/icons';
 
@@ -66,7 +62,7 @@ export default function StudentSubmitPage() {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     reset,
     formState: { errors },
   } = useForm<SubmissionFormValues>({
@@ -79,15 +75,17 @@ export default function StudentSubmitPage() {
     },
   });
 
-  const watchProjectName = watch('projectName');
-  const watchRepoUrl = watch('repoUrl');
-  const watchLiveUrl = watch('liveUrl');
-  const watchDescription = watch('description');
+  // useWatch (unlike watch()) is memoization-safe, so the live preview works with the React Compiler
+  const [watchProjectName, watchRepoUrl, watchLiveUrl, watchDescription] = useWatch({
+    control,
+    name: ['projectName', 'repoUrl', 'liveUrl', 'description'],
+  });
 
+  // Auth Guard: only students can submit; mentors/admins go to their review queue
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
+    if (authLoading) return;
+    if (!user) router.push('/login');
+    else if (user.role !== 'STUDENT') router.push('/mentor/dashboard');
   }, [user, authLoading, router]);
 
   const onSubmit = async (data: SubmissionFormValues) => {

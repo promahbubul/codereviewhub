@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import api, { getApiErrorMessage } from '@/lib/api';
@@ -34,11 +34,9 @@ import {
   RefreshCw,
   CheckCircle2,
   XCircle,
-  Clock,
   ExternalLink,
   ShieldAlert,
   SlidersHorizontal,
-  FileCode2,
 } from 'lucide-react';
 import { GithubIcon } from '@/components/ui/icons';
 
@@ -117,48 +115,21 @@ export default function MentorDashboardPage() {
   const [feedbackText, setFeedbackText] = useState('');
   const [isActionLoading, setIsActionLoading] = useState(false);
 
-  // Fetch KPI Stats
-  const fetchStats = useCallback(async () => {
-    try {
-      const res = await api.get('/reviews/statistics');
-      if (res.data.success) {
-        setStats(res.data.data);
-      }
-    } catch (err) {
-      console.error('Failed to fetch statistics:', err);
-    }
-  }, []);
-
-  // Fetch Paginated Submissions
-  const fetchSubmissions = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const params: Record<string, string | number> = {
-        page: currentPage,
-        limit: 10,
-      };
-
-      if (statusFilter !== 'ALL') {
-        params.status = statusFilter;
-      }
-
-      if (searchTerm.trim()) {
-        params.search = searchTerm.trim();
-      }
-
-      const res = await api.get('/reviews/submissions', { params });
-      if (res.data.success) {
-        setSubmissions(res.data.data);
-        setMeta(res.data.meta);
-      }
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Failed to fetch review queue'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentPage, statusFilter, searchTerm]);
+  // Bumped after a review action or manual sync to force both queries to re-run
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const canReview = user?.role === 'MENTOR' || user?.role === 'ADMIN';
+
+  const refresh = () => {
+    setIsLoading(true);
+    setRefreshKey((k) => k + 1);
+  };
+
+  // Any change to page/filter/search goes through here so the table shows its loading state
+  const changeQuery = (update: () => void) => {
+    setIsLoading(true);
+    update();
+  };
 
   // Auth Guard
   useEffect(() => {
@@ -175,21 +146,61 @@ export default function MentorDashboardPage() {
   // Debounce search: only hit the API once the mentor stops typing for 400ms
   useEffect(() => {
     const timer = setTimeout(() => {
-      setSearchTerm(searchInput.trim());
+      const next = searchInput.trim();
+      if (next === searchTerm) return;
+      setIsLoading(true);
+      setSearchTerm(next);
       setCurrentPage(1);
     }, 400);
     return () => clearTimeout(timer);
-  }, [searchInput]);
+  }, [searchInput, searchTerm]);
 
   // Stats are global, so they don't depend on page/filter/search
   useEffect(() => {
-    if (canReview) fetchStats();
-  }, [canReview, fetchStats]);
+    if (!canReview) return;
+    let ignore = false;
 
-  // Re-query the table whenever page, status filter, or (debounced) search changes
+    api
+      .get('/reviews/statistics')
+      .then((res) => {
+        if (!ignore && res.data.success) setStats(res.data.data);
+      })
+      .catch((err) => console.error('Failed to fetch statistics:', err));
+
+    return () => {
+      ignore = true;
+    };
+  }, [canReview, refreshKey]);
+
+  // Re-query the table whenever page, status filter, or (debounced) search changes.
+  // `ignore` drops responses from superseded requests so a slow old query can't overwrite newer results.
   useEffect(() => {
-    if (canReview) fetchSubmissions();
-  }, [canReview, fetchSubmissions]);
+    if (!canReview) return;
+    let ignore = false;
+
+    const params: Record<string, string | number> = { page: currentPage, limit: 10 };
+    if (statusFilter !== 'ALL') params.status = statusFilter;
+    if (searchTerm) params.search = searchTerm;
+
+    api
+      .get('/reviews/submissions', { params })
+      .then((res) => {
+        if (!ignore && res.data.success) {
+          setSubmissions(res.data.data);
+          setMeta(res.data.meta);
+        }
+      })
+      .catch((err) => {
+        if (!ignore) toast.error(getApiErrorMessage(err, 'Failed to fetch review queue'));
+      })
+      .finally(() => {
+        if (!ignore) setIsLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [canReview, currentPage, statusFilter, searchTerm, refreshKey]);
 
   // Open review inspector modal
   const openReviewModal = (sub: SubmissionItem) => {
@@ -219,8 +230,7 @@ export default function MentorDashboardPage() {
       if (res.data.success) {
         toast.success(`Submission marked as ${actionStatus}`);
         setSelectedSubmission(null);
-        fetchStats();
-        fetchSubmissions();
+        refresh();
       }
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Failed to update evaluation status.'));
@@ -294,10 +304,7 @@ export default function MentorDashboardPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              fetchStats();
-              fetchSubmissions();
-            }}
+            onClick={refresh}
             isLoading={isLoading}
             className="gap-1.5"
           >
@@ -352,10 +359,13 @@ export default function MentorDashboardPage() {
           {(['ALL', 'PENDING', 'APPROVED', 'REJECTED'] as const).map((tab) => (
             <button
               key={tab}
-              onClick={() => {
-                setStatusFilter(tab);
-                setCurrentPage(1);
-              }}
+              onClick={() =>
+                (tab !== statusFilter || currentPage !== 1) &&
+                changeQuery(() => {
+                  setStatusFilter(tab);
+                  setCurrentPage(1);
+                })
+              }
               className={`px-3 py-1 rounded-md text-xs font-mono transition-colors whitespace-nowrap ${
                 statusFilter === tab
                   ? 'bg-zinc-100 text-zinc-900 font-medium'
@@ -517,7 +527,7 @@ export default function MentorDashboardPage() {
               variant="outline"
               size="sm"
               disabled={!meta.hasPrevPage || isLoading}
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              onClick={() => changeQuery(() => setCurrentPage((p) => Math.max(1, p - 1)))}
               className="h-7 px-2 text-xs"
             >
               <ChevronLeft className="h-3.5 w-3.5 mr-0.5" />
@@ -532,7 +542,7 @@ export default function MentorDashboardPage() {
               variant="outline"
               size="sm"
               disabled={!meta.hasNextPage || isLoading}
-              onClick={() => setCurrentPage((p) => p + 1)}
+              onClick={() => changeQuery(() => setCurrentPage((p) => p + 1))}
               className="h-7 px-2 text-xs"
             >
               Next

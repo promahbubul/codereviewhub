@@ -11,9 +11,6 @@ import { Badge } from '@/components/ui/badge';
 import {
   Send,
   Globe,
-  Clock,
-  CheckCircle2,
-  XCircle,
   MessageSquare,
   AlertCircle,
   RefreshCw,
@@ -46,31 +43,43 @@ export default function StudentDashboardPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const fetchSubmissions = async () => {
+  const isStudent = user?.role === 'STUDENT';
+
+  const refresh = () => {
     setIsLoading(true);
     setError(null);
-    try {
-      const res = await api.get('/submissions/my');
-      if (res.data.success) {
-        setSubmissions(res.data.data);
-      }
-    } catch (err) {
-      setError(getApiErrorMessage(err, 'Failed to fetch deliverables log'));
-    } finally {
-      setIsLoading(false);
-    }
+    setRefreshKey((k) => k + 1);
   };
 
+  // Auth Guard: mentors/admins have no submissions of their own, send them to the review queue
   useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        router.push('/login');
-      } else {
-        fetchSubmissions();
-      }
-    }
-  }, [user, authLoading, router]);
+    if (authLoading) return;
+    if (!user) router.push('/login');
+    else if (!isStudent) router.push('/mentor/dashboard');
+  }, [user, authLoading, isStudent, router]);
+
+  useEffect(() => {
+    if (!isStudent) return;
+    let ignore = false;
+
+    api
+      .get('/submissions/my')
+      .then((res) => {
+        if (!ignore && res.data.success) setSubmissions(res.data.data);
+      })
+      .catch((err) => {
+        if (!ignore) setError(getApiErrorMessage(err, 'Failed to fetch deliverables log'));
+      })
+      .finally(() => {
+        if (!ignore) setIsLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [isStudent, refreshKey]);
 
   const getStatusBadge = (status: Submission['status']) => {
     switch (status) {
@@ -106,7 +115,7 @@ export default function StudentDashboardPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={fetchSubmissions} className="gap-1.5 font-mono text-xs">
+          <Button variant="outline" size="sm" onClick={refresh} className="gap-1.5 font-mono text-xs">
             <RefreshCw className="h-3.5 w-3.5" />
             Refresh
           </Button>

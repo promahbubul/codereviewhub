@@ -1,21 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Layers, Send, TableProperties, LogOut, LogIn, CheckCircle2 } from 'lucide-react';
+import { Layers, Send, TableProperties, LogOut } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Auth state is restored from localStorage after hydration; render nothing auth-specific until then
+  const authReady = !isLoading;
 
   const getInitials = (name: string) => {
     if (!name) return 'U';
@@ -44,7 +41,7 @@ export const Navbar: React.FC = () => {
 
         {/* Center Navigation Links */}
         <nav className="hidden md:flex items-center gap-1">
-          {mounted && user?.role === 'STUDENT' && (
+          {authReady && user?.role === 'STUDENT' && (
             <>
               <Link
                 href="/student/submit"
@@ -71,7 +68,7 @@ export const Navbar: React.FC = () => {
             </>
           )}
 
-          {mounted && (user?.role === 'MENTOR' || user?.role === 'ADMIN') && (
+          {authReady && (user?.role === 'MENTOR' || user?.role === 'ADMIN') && (
             <Link
               href="/mentor/dashboard"
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
@@ -88,7 +85,7 @@ export const Navbar: React.FC = () => {
 
         {/* Right Section: Auth State */}
         <div className="flex items-center gap-3">
-          {mounted ? (
+          {authReady ? (
             user ? (
               <div className="flex items-center gap-3">
                 <Badge
